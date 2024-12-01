@@ -1,19 +1,46 @@
 import flet as ft
+import csv
+from IPython.display import clear_output
+from Crypto.Cipher import AES
 
 
 class MainInputs(ft.Column):
-    def __init__(self, function, inputs_data):
+    def __init__(self, function, inputs_data, page):
         super().__init__()
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
-
+        text_e = ft.Text(
+            "Revisa los datos introducidos e inténtelo de nuevo.", visible=False, color="red")
         # Crear los campos de texto dinámicamente
         self.inputs = [ft.CupertinoTextField(**data) for data in inputs_data]
 
         def print_inputs(e):
-            for i, input_field in enumerate(self.inputs):
-                print(f"Input {i + 1}: {input_field.value}")
-                input_field.value = ""
-                input_field.update()
+            data = []
+            if len(self.inputs) == 3:
+                for i, input_field in enumerate(self.inputs):
+                    data.append(input_field.value)
+                with open("users.csv", mode="a", newline="") as f:
+                    writer = csv.writer(f, delimiter=",")
+                    email = data[0]
+                    password = data[1]
+                    password2 = data[2]
+
+                    clear_output()
+                    reader = csv.reader(f, delimiter=",")
+                    for row in reader:
+                        if row == [email]:
+                            print("Cuenta ya creada")
+                    else:
+                        if password == password2:
+                            writer.writerow(
+                                [email, password])
+                            for input_field in enumerate(self.inputs):
+                                input_field.value = ""
+                                input_field.update()
+                        else:
+                            text_e.visible = True
+                            page.update()
+            elif len(self.inputs) == 2:
+                print("Log in")
 
         button = ft.CupertinoFilledButton(
             content=ft.Text(function),
@@ -25,7 +52,7 @@ class MainInputs(ft.Column):
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-        self.controls = [text] + self.inputs + [button]
+        self.controls = [text] + self.inputs + [text_e, button]
 
 
 class logo(ft.Image):
@@ -124,11 +151,11 @@ class AboutPage(ft.Row):
 
 
 class data_page(ft.Row):
-    def __init__(self, text, inputs_data):
+    def __init__(self, text, inputs_data, page):
 
         super().__init__()
 
-        column = ft.Column([logo(), MainInputs(text, inputs_data)],
+        column = ft.Column([logo(), MainInputs(text, inputs_data, page)],
                            alignment=ft.MainAxisAlignment.CENTER,
                            horizontal_alignment=ft.CrossAxisAlignment.CENTER
                            )

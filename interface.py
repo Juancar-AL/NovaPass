@@ -1,5 +1,5 @@
 import flet as ft
-import classes as cl
+import classes_interface as cl
 
 language = "Spanish"
 
@@ -18,10 +18,10 @@ def main(page: ft.Page):
     password_text = "Contraseña" if language == "Spanish" else "Password"
 
     reg_inputs_data = [
-        {"placeholder_text": "Nombre" if language ==
-            "Spanish" else "Name", "width": 500},
         {"placeholder_text": email_text, "width": 500},
         {"placeholder_text": password_text, "password": True,
+            "can_reveal_password": True, "width": 500},
+        {"placeholder_text": f"Confirmar {password_text}".capitalize(), "password": True,
             "can_reveal_password": True, "width": 500},
     ]
 
@@ -34,8 +34,8 @@ def main(page: ft.Page):
     # Instancias de las páginas
     quit = cl.quit()
     about_page = cl.AboutPage(page, language, page_change)
-    log_page = cl.data_page("Iniciar sesión", log_inputs_data)
-    reg_page = cl.data_page("Registrarse", reg_inputs_data)
+    log_page = cl.data_page("Iniciar sesión", log_inputs_data, page)
+    reg_page = cl.data_page("Registrarse", reg_inputs_data, page)
 
     # Diccionario de páginas
     pages = {

@@ -1,107 +1,52 @@
 import flet as ft
+import classes as cl
 
 language = "Spanish"
 
 
 def main(page: ft.Page):
-    global language
-
-    login_button_ref = ft.Ref[ft.CupertinoFilledButton]()
-    register_button_ref = ft.Ref[ft.CupertinoFilledButton]()
-
     page.title = "NovaPass | Password Manager"
     page.theme_mode = ft.ThemeMode.LIGHT
-    quit = ft.Row(
-        [
-            ft.Column(
-                [
-                    ft.IconButton(icon=ft.Icons.EXIT_TO_APP_ROUNDED,
-                                  icon_color="blue400",
-                                  icon_size=30,
-                                  on_click=lambda e: e.page.window_close())
-                ],
-                alignment=ft.MainAxisAlignment.END,
-                horizontal_alignment=ft.CrossAxisAlignment.END,
-            )
-        ],
-        alignment=ft.MainAxisAlignment.END,
-        vertical_alignment=ft.CrossAxisAlignment.END,
-    )
 
-    def set_language(lan):
-        global language
-        language = lan
-
-        login_button_ref.current.content.value = "Iniciar sesión" if language == "Spanish" else "Log in"
-        register_button_ref.current.content.value = "Registrarse" if language == "Spanish" else "Register"
-        page.close(dialog_lan)
+    def page_change(new_page):
+        page.controls.clear()
+        page.controls.extend(pages.get(new_page, []))
         page.update()
-    dialog_lan = ft.AlertDialog(actions=[
-        ft.CupertinoButton(content=ft.Image(
-            src=f"assets/esp.png", width=100, height=100, fit=ft.ImageFit.CONTAIN), on_click=lambda e: set_language("Spanish")),
-        ft.CupertinoButton(content=ft.Image(
-            src=f"assets/uk.png", width=100, height=100, fit=ft.ImageFit.CONTAIN), on_click=lambda e: set_language("English"))
-    ])
 
-    about_page = ft.Row(
-        [
-            ft.Column(
-                [
-                    ft.Image(src=f"assets/logo.png", width=200,
-                             height=200,
-                             fit=ft.ImageFit.CONTAIN),
-                    ft.Column(
-                        [
-                            ft.CupertinoFilledButton(
-                                ref=login_button_ref,
-                                content=ft.Text(
-                                    "Iniciar sesión" if language == "Spanish" else "Log in"),
-                                opacity_on_click=0.3,
-                                on_click=lambda e: print(
-                                    "Inicio de sesión" if language == "Spanish" else "Log in"),
-                                width=500
-                            ),
-                            ft.CupertinoFilledButton(
-                                ref=register_button_ref,
-                                content=ft.Text(
-                                    "Registrarse" if language == "Spanish" else "Register"),
-                                opacity_on_click=0.3,
-                                on_click=lambda e: print(
-                                    "Registro"),
-                                width=500
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    ft.Divider()
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            )
-        ],
-        expand=True,
-        alignment=ft.MainAxisAlignment.CENTER,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-    )
-    lan = ft.Row(
-        [
-            ft.Column(
-                [
-                    ft.IconButton(icon=ft.Icons.TRANSLATE_ROUNDED,
-                                  icon_color="blue400",
-                                  icon_size=30,
-                                  on_click=lambda e: page.open(dialog_lan))
-                ],
-                alignment=ft.MainAxisAlignment.END,
-                horizontal_alignment=ft.CrossAxisAlignment.END,
-            )
-        ],
-        alignment=ft.MainAxisAlignment.END,
-        vertical_alignment=ft.CrossAxisAlignment.END,
-    )
+    # Datos para inputs
+    email_text = "Correo electrónico" if language == "Spanish" else "Email"
+    password_text = "Contraseña" if language == "Spanish" else "Password"
 
-    page.add(quit, about_page, lan)
+    reg_inputs_data = [
+        {"placeholder_text": "Nombre" if language ==
+            "Spanish" else "Name", "width": 500},
+        {"placeholder_text": email_text, "width": 500},
+        {"placeholder_text": password_text, "password": True,
+            "can_reveal_password": True, "width": 500},
+    ]
+
+    log_inputs_data = [
+        {"placeholder_text": email_text, "width": 500},
+        {"placeholder_text": password_text, "password": True,
+            "can_reveal_password": True, "width": 500},
+    ]
+
+    # Instancias de las páginas
+    quit = cl.quit()
+    about_page = cl.AboutPage(page, language, page_change)
+    log_page = cl.data_page("Iniciar sesión", log_inputs_data)
+    reg_page = cl.data_page("Registrarse", reg_inputs_data)
+
+    # Diccionario de páginas
+    pages = {
+        "welcome": [quit, about_page],
+        "login": [cl.back(page_change, "welcome"), log_page],
+        "register": [cl.back(page_change, "welcome"), reg_page],
+    }
+
+    # Inicializar la página de bienvenida
+    page.controls.extend(pages["welcome"])
+    page.update()
 
 
 ft.app(target=main)

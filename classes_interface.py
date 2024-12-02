@@ -1,7 +1,6 @@
 import flet as ft
 import csv
 from IPython.display import clear_output
-from Crypto.Cipher import AES
 
 
 class MainInputs(ft.Column):
@@ -10,11 +9,14 @@ class MainInputs(ft.Column):
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         text_e = ft.Text(
             "Revisa los datos introducidos e inténtelo de nuevo.", visible=False, color="red")
+        text_r = ft.Text("El email ya ha sido registrado", visible=False, color = "red")
         # Crear los campos de texto dinámicamente
         self.inputs = [ft.CupertinoTextField(**data) for data in inputs_data]
 
         def print_inputs(e):
             data = []
+            with open("users.csv", mode="r", newline="") as fp:
+                s = fp.read()
             if len(self.inputs) == 3:
                 for i, input_field in enumerate(self.inputs):
                     data.append(input_field.value)
@@ -25,22 +27,36 @@ class MainInputs(ft.Column):
                     password2 = data[2]
 
                     clear_output()
-                    reader = csv.reader(f, delimiter=",")
-                    for row in reader:
-                        if row == [email]:
-                            print("Cuenta ya creada")
+
+                    if email in s:
+                        text_r.value = "El email ya ha sido registrado"
+                        text_r.visible = True
+                        page.update()
+                    elif password == password2:
+                        writer.writerow(
+                            [email, password])
+                        for i, input_field in enumerate(self.inputs):
+                            input_field.value = ""
+                            input_field.update()
                     else:
-                        if password == password2:
-                            writer.writerow(
-                                [email, password])
-                            for input_field in enumerate(self.inputs):
-                                input_field.value = ""
-                                input_field.update()
-                        else:
-                            text_e.visible = True
-                            page.update()
+                        text_e.visible = True
+                        page.update()
             elif len(self.inputs) == 2:
-                print("Log in")
+                for i, input_field in enumerate(self.inputs):
+                    data.append(input_field.value)
+
+                email = data[0]
+                password = data[1]
+
+                if email not in s:
+                    text_r.value = "No existe ninguna cuenta con ese correo electrónico"
+                    text_r.visible = True
+                    page.update()
+                elif email in s:
+                    text_r.visible = False
+                    page.update()
+
+                    
 
         button = ft.CupertinoFilledButton(
             content=ft.Text(function),
@@ -52,14 +68,13 @@ class MainInputs(ft.Column):
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-        self.controls = [text] + self.inputs + [text_e, button]
+        self.controls = [text] + self.inputs + [text_e, text_r, button]
 
 
 class logo(ft.Image):
     def __init__(self):
         super().__init__()
-        self.src = "assets/logo.png"
-        self.width = 200
+        self.src = "assets/16792526538172.jpg"
         self.height = 200
         self.fit = ft.ImageFit.FILL
 

@@ -9,11 +9,12 @@ class MainInputs(ft.Column):
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         text_e = ft.Text(
             "Revisa los datos introducidos e inténtelo de nuevo.", visible=False, color="red")
-        text_r = ft.Text("El email ya ha sido registrado", visible=False, color = "red")
+        text_r = ft.Text("El email ya ha sido registrado",
+                         visible=False, color="red")
         # Crear los campos de texto dinámicamente
         self.inputs = [ft.CupertinoTextField(**data) for data in inputs_data]
 
-        def print_inputs(e):
+        def print_inputs(self):
             data = []
             with open("users.csv", mode="r", newline="") as fp:
                 s = fp.read()
@@ -55,8 +56,6 @@ class MainInputs(ft.Column):
                 elif email in s:
                     text_r.visible = False
                     page.update()
-
-                    
 
         button = ft.CupertinoFilledButton(
             content=ft.Text(function),

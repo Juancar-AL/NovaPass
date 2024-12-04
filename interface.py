@@ -7,39 +7,48 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
 
     def page_change(new_page):
-        page.controls.clear()
-        page.controls.extend(pages.get(new_page, []))
-        page.update()
+        if new_page != None:
+            page.controls.clear()
+            page.controls.extend(pages.get(new_page, []))
+            page.update()
+        else:
+            page.window.close()
 
     # Datos para inputs
     email_text = "Correo electrónico"
     password_text = "Contraseña"
 
     reg_inputs_data = [
-        {"placeholder_text": email_text, "width": 500},
+        {"placeholder_text": email_text},
         {"placeholder_text": password_text, "password": True,
-            "can_reveal_password": True, "width": 500},
+            "can_reveal_password": True},
         {"placeholder_text": f"Confirmar {password_text}".capitalize(), "password": True,
-            "can_reveal_password": True, "width": 500},
+            "can_reveal_password": True},
     ]
 
     log_inputs_data = [
-        {"placeholder_text": email_text, "width": 500},
+        {"placeholder_text": email_text},
         {"placeholder_text": password_text, "password": True,
-            "can_reveal_password": True, "width": 500},
+            "can_reveal_password": True},
     ]
 
     # Instancias de las páginas
-    quit = cl.quit()
-    about_page = cl.AboutPage(page, page_change)
-    log_page = cl.data_page("Iniciar sesión", log_inputs_data, page)
-    reg_page = cl.data_page("Registrarse", reg_inputs_data, page)
+    quit = cl.IconButtonRow(on_click=page_change,
+                            icon=ft.Icons.EXIT_TO_APP_ROUNDED)
+    about_page = cl.AboutPage(page_change)
+    log_page = cl.data_page(
+        "Iniciar sesión", log_inputs_data, page, change=page_change, new_page="main")
+    reg_page = cl.data_page(
+        "Registrarse", reg_inputs_data, page, change=page_change, new_page="main")
+
+    main_page = cl.MainPage(page_change)
 
     # Diccionario de páginas
     pages = {
         "welcome": [quit, about_page],
-        "login": [cl.back(page_change, "welcome"), log_page],
-        "register": [cl.back(page_change, "welcome"), reg_page],
+        "login": [cl.IconButtonRow(on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK), log_page],
+        "register": [cl.IconButtonRow(on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK), reg_page],
+        "main": [main_page, cl.Passwords_show()]
     }
 
     # Inicializar la página de bienvenida

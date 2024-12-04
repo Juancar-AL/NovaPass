@@ -1,14 +1,16 @@
 import flet as ft
 import csv
 from IPython.display import clear_output
-
+import time
 
 class MainInputs(ft.Column):
+
     def __init__(self, function, inputs_data, page):
         super().__init__()
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         text_e = ft.Text(
             "Revisa los datos introducidos e inténtelo de nuevo.", visible=False, color="red")
+<<<<<<< HEAD
         text_r = ft.Text("El email ya ha sido registrado",
                          visible=False, color="red")
         # Crear los campos de texto dinámicamente
@@ -23,29 +25,66 @@ class MainInputs(ft.Column):
                     data.append(input_field.value)
                 with open("users.csv", mode="a", newline="") as f:
                     writer = csv.writer(f, delimiter=",")
+=======
+        text_e = ft.Text("El email ya ha sido registrado", visible=False, color = "red")
+        # Crear los campos de texto dinámicamente
+        self.inputs = [ft.CupertinoTextField(**data) for data in inputs_data]
+
+        def error(n_text):
+            text_e.value = n_text
+            text_e.visible = True
+            page.update()
+            time.sleep(3)
+            text_e.visible = False
+            page.update()
+
+
+        def get_inputs():
+                data = []
+                with open("users.csv", mode="r", newline="") as fp:
+                    s = fp.read()
+                if len(self.inputs) == 3:
+                    for i, input_field in enumerate(self.inputs):
+                        data.append(input_field.value)
+                    with open("users.csv", mode="a", newline="") as f:
+                        writer = csv.writer(f, delimiter=",")
+                        email = data[0]
+                        password = data[1]
+                        password2 = data[2]
+
+                        clear_output()
+
+                        if "@" in email:
+                            if password == "" and password2 == "":
+                                error("Por favor introduzca una contraseña")
+                            elif email in s:
+                                error("El email ya ha sido registrado")
+                            elif password == password2:
+                                writer.writerow(
+                                    [email, password])
+                                for i, input_field in enumerate(self.inputs):
+                                    input_field.value = ""
+                                    input_field.update()
+                            else:
+                                error("Por favor, revise los datos e inténtelo de nuevo")
+                        else:
+                            error("Por favor introduzca un correo válido")
+                elif len(self.inputs) == 2:
+                    for i, input_field in enumerate(self.inputs):
+                        data.append(input_field.value)
+
+>>>>>>> a0603ed4b93b6588c29d3c4eeddb7af589c88ffd
                     email = data[0]
                     password = data[1]
-                    password2 = data[2]
 
-                    clear_output()
-
-                    if email in s:
-                        text_r.value = "El email ya ha sido registrado"
-                        text_r.visible = True
+                    if email not in s:
+                        error("No existe ninguna cuenta con ese correo electrónico")
+                    elif email in s:
+                        text_e.visible = False
                         page.update()
-                    elif password == password2:
-                        writer.writerow(
-                            [email, password])
-                        for i, input_field in enumerate(self.inputs):
-                            input_field.value = ""
-                            input_field.update()
-                    else:
-                        text_e.visible = True
-                        page.update()
-            elif len(self.inputs) == 2:
-                for i, input_field in enumerate(self.inputs):
-                    data.append(input_field.value)
+                        print("Email dentro")
 
+<<<<<<< HEAD
                 email = data[0]
                 password = data[1]
 
@@ -56,18 +95,20 @@ class MainInputs(ft.Column):
                 elif email in s:
                     text_r.visible = False
                     page.update()
+=======
+>>>>>>> a0603ed4b93b6588c29d3c4eeddb7af589c88ffd
 
         button = ft.CupertinoFilledButton(
             content=ft.Text(function),
             opacity_on_click=0.3,
-            on_click=print_inputs,
+            on_click=lambda e: get_inputs(),
             width=500
         )
 
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-        self.controls = [text] + self.inputs + [text_e, text_r, button]
+        self.controls = [text] + self.inputs + [text_e, button]
 
 
 class logo(ft.Image):
@@ -120,11 +161,11 @@ class back(ft.Row):
 
 class AboutPage(ft.Row):
 
-    def __init__(self, page, language, function, ):
+    def __init__(self, page, function, ):
 
         login_button = ft.CupertinoFilledButton(
             content=ft.Text(
-                "Iniciar sesión" if language == "Spanish" else "Log in"
+                "Iniciar sesión"
             ),
             opacity_on_click=0.3,
             on_click=lambda e: function("login"),
@@ -133,7 +174,7 @@ class AboutPage(ft.Row):
 
         register_button = ft.CupertinoFilledButton(
             content=ft.Text(
-                "Registrarse" if language == "Spanish" else "Register"
+                "Registrarse"
             ),
             opacity_on_click=0.3,
             on_click=lambda e: function("register"),

@@ -1,8 +1,6 @@
 import flet as ft
 import classes_interface as cl
 
-language = "Spanish"
-
 
 def main(page: ft.Page):
     page.title = "NovaPass | Password Manager"
@@ -14,8 +12,8 @@ def main(page: ft.Page):
         page.update()
 
     # Datos para inputs
-    email_text = "Correo electrónico" if language == "Spanish" else "Email"
-    password_text = "Contraseña" if language == "Spanish" else "Password"
+    email_text = "Correo electrónico"
+    password_text = "Contraseña"
 
     reg_inputs_data = [
         {"placeholder_text": email_text, "width": 500},
@@ -33,7 +31,7 @@ def main(page: ft.Page):
 
     # Instancias de las páginas
     quit = cl.quit()
-    about_page = cl.AboutPage(page, language, page_change)
+    about_page = cl.AboutPage(page, page_change)
     log_page = cl.data_page("Iniciar sesión", log_inputs_data, page)
     reg_page = cl.data_page("Registrarse", reg_inputs_data, page)
 

@@ -250,8 +250,6 @@ class Passwords_show(ft.GridView):
                 if row[0] == MainInputs.email:  # Check if the row belongs to the target user
                     containers.append((row[1], row[2]))
         print(containers)
-        # for i in containers:
-        #     self.controls.append(i)
 
 
 class MainPage(ft.Row):

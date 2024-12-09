@@ -2,6 +2,9 @@ import flet as ft
 import csv
 import time
 
+global global_email
+global_email = None
+
 
 class SnackBarError(ft.SnackBar):
     def __init__(self, page):
@@ -25,7 +28,7 @@ class MainInputs(ft.Column):
         error_text = SnackBarError(page)
         # Crear los campos de texto dinámicamente
         self.inputs = [ft.CupertinoTextField(**data) for data in inputs_data]
-        self.email = None
+        global global_email
 
         def update_data(data):
             for i, input_field in enumerate(self.inputs):
@@ -86,24 +89,31 @@ class MainInputs(ft.Column):
                 input_field.update()
 
         def get_inputs():
+            global global_email
             data = []
             with open("users.csv", mode="r", newline="") as fp:
                 s = fp.read()
             update_data(data)
+
             if len(self.inputs) == 3:
-                email = data[0]
+                global global_email
+                global_email = data[0]
                 password = data[1]
                 password2 = data[2]
-                if validate_email(email, content=s, mode="register") and validate_passwords(password, password2):
+                if validate_email(global_email, content=s, mode="register") and validate_passwords(password, password2):
                     with open("users.csv", mode="a", newline="") as f:
                         writer = csv.writer(f, delimiter=",")
-                        writer.writerow([email, password])
+                        writer.writerow([global_email, password])
                     clear_inputs()
             elif len(self.inputs) == 2:
-                self.email = data[0]
+                global global_email
+                # Set global_email to the provided email
+                global_email = data[0]
+                password_view = Passwords_show()
+                password_view.email = global_email  # Properly set the email
                 self.password = data[1]
 
-                if self.email == "root" or validate_email(self.email, self.password, s, mode="login"):
+                if global_email == "root" or validate_email(global_email, self.password, s, mode="login"):
                     change(new_page)
 
         for input_field in self.inputs:
@@ -155,7 +165,7 @@ class IconButtonRow(ft.Row):
 
 class AboutPage(ft.Row):
 
-    def __init__(self, function, ):
+    def __init__(self, function):
 
         login_button = ft.CupertinoFilledButton(
             content=ft.Text(
@@ -221,7 +231,7 @@ class PasswordContainer(ft.Container):
         super().__init__()
         text = ft.Text(value="Servicio")
         service = ft.Text(
-            value=service, bgcolor=ft.Colors.WHITE, color=ft.Colors.BLUE_400, )
+            value=service)
         text2 = ft.Text(value="Contraseña")
         password = ft.Text(value=password)
 
@@ -235,6 +245,8 @@ class PasswordContainer(ft.Container):
 
 class Passwords_show(ft.GridView):
     def __init__(self):
+        global global_email
+        self.email = global_email
         super().__init__()
         self.expand = 1
         self.runs_count = 5
@@ -242,14 +254,33 @@ class Passwords_show(ft.GridView):
         self.child_aspect_ratio = 1.0
         self.spacing = 5
         self.run_spacing = 5
+        self.load_passwords()
+
+    def load_passwords(self):
+        """Load password containers based on the email."""
+        self.controls = []
+        if not self.email:
+            return
 
         containers = []
         with open("psw.csv", mode="r", newline="") as psw:
-            reader = csv.reader(psw)  # Use DictReader for named access
+            reader = csv.reader(psw)
+            print(self.email)
             for row in reader:
-                if row[0] == MainInputs.email:  # Check if the row belongs to the target user
+                if row[0] == self.email:
                     containers.append((row[1], row[2]))
-        print(containers)
+
+        for service, password in containers:
+            self.controls.append(PasswordContainer(service, password))
+
+    @property
+    def email(self):
+        return global_email  # Always fetch the latest value
+
+    @email.setter
+    def email(self, value):
+        self._email = value
+        self.load_passwords()
 
 
 class MainPage(ft.Row):

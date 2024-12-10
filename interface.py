@@ -11,6 +11,8 @@ def main(page: ft.Page):
             page.controls.clear()
             page.controls.extend(pages.get(new_page, []))
             page.update()
+            psw_page = cl.Passwords_show(page)
+            page.update()
         else:
             page.window.close()
 
@@ -43,12 +45,17 @@ def main(page: ft.Page):
 
     main_page = cl.MainPage(page_change)
 
+    back_button = cl.IconButtonRow(
+        on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK)
+
+    psw_page = cl.Passwords_show(page)
+
     # Diccionario de páginas
     pages = {
         "welcome": [quit, about_page],
-        "login": [cl.IconButtonRow(on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK), log_page],
-        "register": [cl.IconButtonRow(on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK), reg_page],
-        "main": [main_page, cl.Passwords_show()]
+        "login": [back_button, log_page],
+        "register": [back_button, reg_page],
+        "main": [main_page, psw_page]
     }
 
     # Inicializar la página de bienvenida

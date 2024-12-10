@@ -96,7 +96,6 @@ class MainInputs(ft.Column):
             update_data(data)
 
             if len(self.inputs) == 3:
-                global global_email
                 global_email = data[0]
                 password = data[1]
                 password2 = data[2]
@@ -106,10 +105,9 @@ class MainInputs(ft.Column):
                         writer.writerow([global_email, password])
                     clear_inputs()
             elif len(self.inputs) == 2:
-                global global_email
                 # Set global_email to the provided email
                 global_email = data[0]
-                password_view = Passwords_show()
+                password_view = Passwords_show(page)
                 password_view.email = global_email  # Properly set the email
                 self.password = data[1]
 
@@ -244,7 +242,8 @@ class PasswordContainer(ft.Container):
 
 
 class Passwords_show(ft.GridView):
-    def __init__(self):
+    def __init__(self, page):
+        self.page = page
         global global_email
         self.email = global_email
         super().__init__()
@@ -254,7 +253,6 @@ class Passwords_show(ft.GridView):
         self.child_aspect_ratio = 1.0
         self.spacing = 5
         self.run_spacing = 5
-        self.load_passwords()
 
     def load_passwords(self):
         """Load password containers based on the email."""
@@ -269,9 +267,14 @@ class Passwords_show(ft.GridView):
             for row in reader:
                 if row[0] == self.email:
                     containers.append((row[1], row[2]))
+                    print(containers)
 
         for service, password in containers:
+            print(service, password)
             self.controls.append(PasswordContainer(service, password))
+            print(self.controls)
+        if self.page:
+            self.page.update()
 
     @property
     def email(self):

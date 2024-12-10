@@ -22,7 +22,7 @@ class SnackBarError(ft.SnackBar):
 
 class MainInputs(ft.Column):
 
-    def __init__(self, function, inputs_data, page, change, new_page):
+    def __init__(self, function, inputs_data, page = None, change = None, new_page = None):
         super().__init__()
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         error_text = SnackBarError(page)
@@ -227,10 +227,10 @@ class data_page(ft.Row):
 class PasswordContainer(ft.Container):
     def __init__(self, service, password):
         super().__init__()
-        text = ft.Text(value="Servicio")
+        text = ft.Container(content=ft.Text(value="Servicio"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
         service = ft.Text(
             value=service)
-        text2 = ft.Text(value="Contraseña")
+        text2 = ft.Container(content=ft.Text(value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
         password = ft.Text(value=password)
 
         controls = ft.Column([text, service, text2, password])
@@ -247,9 +247,9 @@ class Passwords_show(ft.GridView):
         global global_email
         self.email = global_email
         super().__init__()
-        self.expand = 1
+        self.expand = 2
         self.runs_count = 5
-        self.max_extent = 150
+        self.max_extent = 170
         self.child_aspect_ratio = 1.0
         self.spacing = 5
         self.run_spacing = 5
@@ -263,16 +263,12 @@ class Passwords_show(ft.GridView):
         containers = []
         with open("psw.csv", mode="r", newline="") as psw:
             reader = csv.reader(psw)
-            print(self.email)
             for row in reader:
                 if row[0] == self.email:
                     containers.append((row[1], row[2]))
-                    print(containers)
 
         for service, password in containers:
-            print(service, password)
             self.controls.append(PasswordContainer(service, password))
-            print(self.controls)
         if self.page:
             self.page.update()
 
@@ -286,8 +282,18 @@ class Passwords_show(ft.GridView):
         self.load_passwords()
 
 
+class test_AlertDialog(ft.AlertDialog):
+    def __init__(self):
+        super().__init__()
+        self.title=ft.Text("Nueva contraseña"),
+        column = ft.Text(value="TEST")
+
+        self.controls=[column]
+        
+
+
 class MainPage(ft.Row):
-    def __init__(self, function):
+    def __init__(self, function, page):
         super().__init__()
 
         search_row = ft.SearchBar(
@@ -297,5 +303,24 @@ class MainPage(ft.Row):
 
         self.alignment = ft.MainAxisAlignment.SPACE_BETWEEN
 
-        self.controls = [row, IconButtonRow(
-            on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)]
+        back = IconButtonRow(
+            on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
+        
+        add = IconButtonRow(on_click=lambda e: page.open(                ft.CupertinoAlertDialog(
+                    title=ft.Text("Nueva contraseña"),
+                    content=ft.Column(controls=[ft.CupertinoTextField(placeholder_text="Servicio"),ft.CupertinoTextField(placeholder_text="Contraseña")]),
+                    actions= [
+        ft.CupertinoDialogAction(
+            "Cerrar",
+            is_destructive_action=True,
+            on_click= lambda e: print("Cerrar"),
+        ),
+        ft.CupertinoDialogAction(
+            text="Guardar",
+            is_default_action=True,
+            on_click=lambda e: print("Guardar"),
+        ),
+    ]
+                )), icon=ft.icons.ADD_CIRCLE)
+
+        self.controls = [row, add, back]

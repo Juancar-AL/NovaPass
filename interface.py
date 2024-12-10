@@ -11,7 +11,8 @@ def main(page: ft.Page):
             page.controls.clear()
             page.controls.extend(pages.get(new_page, []))
             page.update()
-            psw_page = cl.Passwords_show(page)
+            if new_page == "main":
+                psw_page.load_passwords()
             page.update()
         else:
             page.window.close()
@@ -43,7 +44,7 @@ def main(page: ft.Page):
     reg_page = cl.data_page(
         "Registrarse", reg_inputs_data, page, change=page_change, new_page="main")
 
-    main_page = cl.MainPage(page_change)
+    main_page = cl.MainPage(page_change, page)
 
     back_button = cl.IconButtonRow(
         on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK)

@@ -111,7 +111,7 @@ class MainInputs(ft.Column):
     def get_inputs(self, page, change, new_page):
         global global_email
         data = []
-        with open("users.csv", mode="r", newline="") as fp:
+        with open("users.csv", mode="r", newline="", encoding='utf-8') as fp:
             s = fp.read()
         self.update_data(data)
 
@@ -120,7 +120,7 @@ class MainInputs(ft.Column):
             password = data[1]
             password2 = data[2]
             if self.validate_email(global_email, content=s, mode="register") and self.validate_passwords(password, password2):
-                with open("users.csv", mode="a", newline="") as f:
+                with open("users.csv", mode="a", newline="", encoding='utf-8') as f:
                     writer = csv.writer(f, delimiter=",")
                     writer.writerow([global_email, password])
                 self.clear_inputs()
@@ -229,48 +229,49 @@ class data_page(ft.Row):
 
 
 class PasswordContainer(ft.Container):
-    def __init__(self, service, password):
+    def __init__(self, page, psw, service=None, password=None, edit=False):
         super().__init__()
+        self.edit = edit
+        self.page = page
+        self.psw = psw
+        
+        # Textos de encabezado
         text = ft.Container(content=ft.Text(value="Servicio"),
                             bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-        service = ft.Text(
-            value=service)
-        text2 = ft.Container(content=ft.Text(
-            value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-        password = ft.Text(value=password)
-
-        controls = ft.Column([text, service, text2, password])
-
-        self.bgcolor = ft.Colors.BLUE_400
-        self.padding = 10
-        self.border_radius = 10
-        self.content = controls
-        self.shadow = ft.BoxShadow(
-            spread_radius=1,
-            blur_radius=30,
-            color=ft.Colors.BLUE_400,
-            blur_style=ft.ShadowBlurStyle.OUTER,
-        )
-
-
-class PasswordEditContainer(ft.Container):
-    def __init__(self, page, psw):
-        super().__init__()
-        text = ft.Container(content=ft.Text(value="Servicio"),
-                            bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
+        
+        # Campo de servicio: si es edición, pre-llena el campo, si no, deja vacío
         self.service = ft.CupertinoTextField(
-            value="Servicio", placeholder_text="Servicio", on_submit=lambda e: self.save(page, psw), autofocus=True, text_size=15, max_lines=1, capitalization=True)
-        text2 = ft.Container(content=ft.Text(
-            value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
+            placeholder_text="Servicio", 
+            value=service if service else "", 
+            on_submit=lambda e: self.save(), 
+            autofocus=True, 
+            read_only= True if service else False,
+            text_size=15, 
+            max_lines=1, 
+            capitalization=True
+        )
+        
+        # Textos de contraseña
+        text2 = ft.Container(content=ft.Text(value="Contraseña"),
+                             bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
+        
+        # Campo de contraseña: si es edición, pre-llena el campo, si no, deja vacío
         self.password = ft.CupertinoTextField(
-            value="Contraseña", placeholder_text="Contraseña", on_submit=lambda e: self.save(page, psw),  text_size=15, max_lines=1)
+            placeholder_text="Contraseña", 
+            value=password if password else "", 
+            on_submit=lambda e: self.save(), 
+            text_size=15, 
+            max_lines=1
+        )
 
-        controls = ft.Column([text, self.service, text2, self.password])
+        # Definir columna de controles
+        column = ft.Column(controls=[text, self.service, text2, self.password])
 
+        # Estilos comunes
         self.bgcolor = ft.Colors.BLUE_400
         self.padding = 10
         self.border_radius = 10
-        self.content = controls
+        self.content = column
         self.shadow = ft.BoxShadow(
             spread_radius=1,
             blur_radius=30,
@@ -278,23 +279,40 @@ class PasswordEditContainer(ft.Container):
             blur_style=ft.ShadowBlurStyle.OUTER,
         )
 
-    def save(self, page, psw):
-        error_text = SnackBarError(page)
+        # Si es un contenedor editable, configura el comportamiento de cambio
+        if self.edit:
+            self.on_click = lambda e: self.change()
+        else:
+            self.on_click = lambda e: self.save()
+
+    def save(self):
+        # Verificar que ambos campos tengan valores
         if self.service.value != "" and self.password.value != "":
-            with open("psw.csv", mode="a", newline="") as f:
+            # Guardar los datos en el archivo CSV
+            with open("psw.csv", mode="a", newline="", encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter=",")
-                writer.writerow(
-                    [global_email, self.service.value, self.password.value])
+                writer.writerow([global_email, self.service.value, self.password.value])
+            
+            # Limpiar los campos después de guardar
             self.service.value = ""
             self.password.value = ""
-            psw.load_passwords()
+            self.psw.load_passwords()
         else:
-            self.column.controls.append(
-                ft.Text(value="Introduzca unos campos válidos", color=ft.Colors.RED))
-            page.update()
-            time.sleep(3)
-            self.column.controls.pop()
-            page.update()
+            # Si falta algún dato, cambiar el color de fondo a rojo
+            self.service.bgcolor = ft.Colors.RED_400
+            self.password.bgcolor = ft.Colors.RED_400
+            self.page.update()
+            time.sleep(0.5)
+            self.service.bgcolor = ft.Colors.WHITE
+            self.password.bgcolor = ft.Colors.WHITE
+            self.page.update()
+
+    def change(self):
+        # Aquí podrías definir lo que ocurre cuando el contenedor es presionado para editar (en este caso, vaciar los campos)
+        self.service.value = ""
+        self.password.value = ""
+        self.page.update()
+
 
 
 class Passwords_show(ft.GridView):
@@ -316,16 +334,17 @@ class Passwords_show(ft.GridView):
             return
 
         containers = []
-        with open("psw.csv", mode="r", newline="") as psw:
+        with open("psw.csv", mode="r", newline="", encoding='utf-8') as psw:
             reader = csv.reader(psw)
             for row in reader:
                 if row[0] == self.email:
                     containers.append((row[1], row[2]))
 
         for service, password in containers:
-            self.controls.append(PasswordContainer(service, password))
+            self.controls.append(PasswordContainer(page, psw, service, password))
         if self.page:
             self.page.update()
+    
 
     @ property
     def email(self):
@@ -351,11 +370,11 @@ class MainPage(ft.Row):
         back = IconButtonRow(
             on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
-        add = IconButtonRow(on_click=lambda e: test(page, psw),
+        add = IconButtonRow(on_click=lambda e: add_psw(page, psw),
                             icon=ft.icons.ADD_CIRCLE)
 
         self.controls = [row, add, back]
 
-        def test(page, psw):
-            psw.controls.append(PasswordEditContainer(page, psw))
+        def add_psw(page, psw):
+            psw.controls.append(PasswordContainer(page, psw))
             page.update()

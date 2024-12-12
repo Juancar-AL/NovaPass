@@ -44,12 +44,12 @@ def main(page: ft.Page):
     reg_page = cl.data_page(
         "Registrarse", reg_inputs_data, page, change=page_change, new_page="main")
 
-    main_page = cl.MainPage(page_change, page)
+    psw_page = cl.Passwords_show(page)
+
+    main_page = cl.MainPage(page_change, page, psw_page)
 
     back_button = cl.IconButtonRow(
         on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK)
-
-    psw_page = cl.Passwords_show(page)
 
     # Diccionario de páginas
     pages = {

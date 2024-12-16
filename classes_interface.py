@@ -256,13 +256,16 @@ class PasswordContainer(ft.Container):
 class PasswordEditContainer(ft.Container):
     def __init__(self, page, psw):
         super().__init__()
+        self.error_text = SnackBarError(page)
         self.service = ft.CupertinoTextField( placeholder_text="Servicio", on_submit=lambda e: self.save(page, psw), autofocus=True, text_size=15, max_lines=1, capitalization=True)
         self.password = ft.CupertinoTextField(placeholder_text="Contraseña", on_submit=lambda e: self.save(page, psw),  text_size=15, max_lines=1)
         divider = ft.Divider(height=20)
         plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(page, psw), bgcolor=ft.Colors.WHITE, mini=True)
         add = ft.Row([plus], alignment = ft.MainAxisAlignment.END)
 
-        controls = ft.Column([self.service,divider, self.password, add])
+        self.column = ft.Column([self.service,divider, self.password, add, self.error_text])
+
+        controls = self.column
 
         self.bgcolor = ft.Colors.BLUE_400
         self.padding = 10
@@ -285,12 +288,7 @@ class PasswordEditContainer(ft.Container):
             self.password.value = ""
             psw.load_passwords()
         else:
-            self.column.controls.append(
-                ft.Text(value="Introduzca unos campos válidos", color=ft.Colors.RED))
-            page.update()
-            time.sleep(3)
-            self.column.controls.pop()
-            page.update()
+            self.error_text.show_error("Introduzca unos campos válidos")
 
 
 
@@ -305,6 +303,7 @@ class Passwords_show(ft.GridView):
         self.spacing = 6
         self.run_spacing = 6
         self.runs_count = 7
+        self.expand = 1
 
     def load_passwords(self):
         """Load password containers based on the email."""

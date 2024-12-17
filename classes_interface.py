@@ -1,6 +1,7 @@
 import flet as ft
 import csv
 import time
+import pandas as pd
 
 global global_email
 global_email = None
@@ -230,27 +231,78 @@ class data_page(ft.Row):
 
 class PasswordContainer(ft.Container):
     def __init__(self, service, password):
+        self.service = service
+        self.password = password
         super().__init__()
         text = ft.Container(content=ft.Text(value="Servicio"),
                             bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
         service = ft.Text(
-            value=service)
+            value=self.service)
         text2 = ft.Container(content=ft.Text(
             value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-        password = ft.Text(value=password)
+        password = ft.Text(value=self.password)
 
-        controls = ft.Column([text, service, text2, password])
+        self.controls = ft.Column([text, service, text2, password])
 
         self.bgcolor = ft.Colors.BLUE_400
         self.padding = 10
         self.border_radius = 10
-        self.content = controls
+        self.content = self.controls
         self.shadow = ft.BoxShadow(
             spread_radius=1,
             blur_radius=30,
             color=ft.Colors.BLUE_400,
             blur_style=ft.ShadowBlurStyle.OUTER,
         )
+        self.ink=True
+        self.on_click=lambda e: self.click()
+        self.clicked = False
+    def click(self):
+        self.clicked = not self.clicked
+        if self.clicked:
+            edit = ft.FloatingActionButton(icon=ft.Icons.EDIT, on_click=lambda e: self.edit(),  bgcolor=ft.Colors.WHITE)
+            delete = ft.FloatingActionButton(icon=ft.Icons.DELETE, on_click=lambda e: print("Test"),  bgcolor=ft.Colors.RED)
+
+            row = ft.Row([edit, delete], alignment=ft.MainAxisAlignment.CENTER)
+
+            self.content = row
+            self.update()
+            
+        if not self.clicked:
+
+            self.content = self.controls
+            self.update()
+
+    def edit(self):
+        self.service = ft.CupertinoTextField( value=self.service, on_submit=lambda e: print("Test"), autofocus=True, text_size=15, max_lines=1, capitalization=True)
+        self.password = ft.CupertinoTextField(value=self.password, on_submit=lambda e: print("Test"),  text_size=15, max_lines=1)
+        divider = ft.Divider(height=20)
+        plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: print("Test"), bgcolor=ft.Colors.WHITE, mini=True)
+        add = ft.Row([plus], alignment = ft.MainAxisAlignment.END)
+
+        self.column = ft.Column([self.service,divider, self.password, add])
+
+        self.content = self.column
+        self.update()
+    def save(self, psw):
+        if self.service.value != "" and self.password.value != "":
+
+            data = {
+                'Email': [global_email],
+                'Service': [self.service.value],
+                'Password': [self.password.value]
+            }
+
+            df = pd.DataFrame(data)
+
+            # Append the DataFrame to the CSV file
+            df.to_csv('psw.csv', mode='a', header=False, index=False, encoding='utf-8')
+            self.service.value = ""
+            self.password.value = ""
+            psw.load_passwords()
+        else:
+            print("Introduzca unos campos válidos")
+
 
 
 class PasswordEditContainer(ft.Container):

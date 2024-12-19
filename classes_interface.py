@@ -112,8 +112,10 @@ class MainInputs(ft.Column):
     def get_inputs(self, page, change, new_page):
         global global_email
         data = []
-        with open("users.csv", mode="r", newline="", encoding='utf-8') as fp:
-            s = fp.read()
+        
+        s = pd.read_csv("users.csv", encoding="utf-8", header=0)
+        print(s)
+
         self.update_data(data)
 
         if len(self.inputs) == 3:
@@ -364,9 +366,15 @@ class Passwords_show(ft.GridView):
             return
 
         containers = []
+        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        user = list(df["User"])
+        print(user)
+        print(df.index.values.tolist())
         with open("psw.csv", mode="r", newline="", encoding='utf-8') as psw:
             reader = csv.reader(psw)
+            #print(type(reader), psw)
             for row in reader:
+                #print(row)
                 if row[0] == self.email:
                     containers.append((row[1], row[2]))
 

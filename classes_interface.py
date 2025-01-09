@@ -367,16 +367,10 @@ class Passwords_show(ft.GridView):
 
         containers = []
         df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-        user = list(df["User"])
-        print(user)
-        print(df.index.values.tolist())
-        with open("psw.csv", mode="r", newline="", encoding='utf-8') as psw:
-            reader = csv.reader(psw)
-            #print(type(reader), psw)
-            for row in reader:
-                #print(row)
-                if row[0] == self.email:
-                    containers.append((row[1], row[2]))
+        reader = df.values.tolist()
+        for row in reader:
+            if row[0] == self.email:
+                containers.append((row[1], row[2]))
 
         for service, password in containers:
             self.controls.append(PasswordContainer(service, password))
@@ -399,7 +393,7 @@ class MainPage(ft.Row):
         super().__init__()
 
         search_row = ft.SearchBar(
-            bar_hint_text="Busca las contraseñas de tus servicios", bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400)
+            bar_hint_text="Busca las contraseñas de tus servicios", capitalization= True, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: print("Búsqueda"))
         row = ft.Row(
             [IconButtonRow(ft.Icons.PERSON, on_click=print), ft.VerticalDivider(width=130), search_row], spacing=30)
 

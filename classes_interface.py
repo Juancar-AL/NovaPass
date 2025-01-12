@@ -24,6 +24,7 @@ class SnackBarError(ft.SnackBar):
 class MainInputs(ft.Column):
 
     def __init__(self, function, inputs_data, page=None, change=None, new_page=None):
+
         super().__init__()
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         self.error_text = SnackBarError(page)
@@ -112,9 +113,8 @@ class MainInputs(ft.Column):
     def get_inputs(self, page, change, new_page):
         global global_email
         data = []
-        
+
         s = pd.read_csv("users.csv", encoding="utf-8", header=0)
-        print(s)
 
         self.update_data(data)
 
@@ -123,10 +123,12 @@ class MainInputs(ft.Column):
             password = data[1]
             password2 = data[2]
             if self.validate_email(global_email, content=s, mode="register") and self.validate_passwords(password, password2):
-                with open("users.csv", mode="a", newline="", encoding='utf-8') as f:
-                    writer = csv.writer(f, delimiter=",")
-                    writer.writerow([global_email, password])
+                df = pd.DataFrame(
+                    data={"Users": [global_email], "Password": [password]})
+                df.to_csv("users.csv", mode="a", index=False,
+                          header=False, encoding="utf-8")
                 self.clear_inputs()
+                change(new_page)
         elif len(self.inputs) == 2:
             # Set global_email to the provided email
             global_email = data[0]
@@ -232,7 +234,10 @@ class data_page(ft.Row):
 
 
 class PasswordContainer(ft.Container):
-    def __init__(self, service, password):
+    def __init__(self, page, psw, service=None, password=None, create=False):
+        self.psw = psw
+        self.create = create
+        self.error_text = SnackBarError(page)
         self.service = service
         self.password = password
         super().__init__()
@@ -244,7 +249,8 @@ class PasswordContainer(ft.Container):
             value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
         password = ft.Text(value=self.password)
 
-        self.controls = ft.Column([text, service, text2, password])
+        self.controls = ft.Column(
+            [text, service, text2, password, self.error_text])
 
         self.bgcolor = ft.Colors.BLUE_400
         self.padding = 10
@@ -256,94 +262,83 @@ class PasswordContainer(ft.Container):
             color=ft.Colors.BLUE_400,
             blur_style=ft.ShadowBlurStyle.OUTER,
         )
-        self.ink=True
-        self.on_click=lambda e: self.click()
+        self.ink = True
+        self.on_click = lambda e: self.click()
         self.clicked = False
+
+        if self.create:
+            self.edit()
+
     def click(self):
         self.clicked = not self.clicked
         if self.clicked:
-            edit = ft.FloatingActionButton(icon=ft.Icons.EDIT, on_click=lambda e: self.edit(),  bgcolor=ft.Colors.WHITE)
-            delete = ft.FloatingActionButton(icon=ft.Icons.DELETE, on_click=lambda e: print("Test"),  bgcolor=ft.Colors.RED)
+            edit = ft.FloatingActionButton(
+                icon=ft.Icons.EDIT, on_click=lambda e: self.edit(),  bgcolor=ft.Colors.WHITE)
+            delete = ft.FloatingActionButton(
+                icon=ft.Icons.DELETE, on_click=lambda e: self.delete(),  bgcolor=ft.Colors.RED)
 
             row = ft.Row([edit, delete], alignment=ft.MainAxisAlignment.CENTER)
 
             self.content = row
             self.update()
-            
+
         if not self.clicked:
 
             self.content = self.controls
             self.update()
 
-    def edit(self):
-        self.service = ft.CupertinoTextField( value=self.service, on_submit=lambda e: print("Test"), autofocus=True, text_size=15, max_lines=1, capitalization=True)
-        self.password = ft.CupertinoTextField(value=self.password, on_submit=lambda e: print("Test"),  text_size=15, max_lines=1)
-        divider = ft.Divider(height=20)
-        plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: print("Test"), bgcolor=ft.Colors.WHITE, mini=True)
-        add = ft.Row([plus], alignment = ft.MainAxisAlignment.END)
+    def delete(self):
+        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        i = df[((df.Users == global_email) & (df.Service == self.service_field.value or df.Service == self.service) & (
+            df.Password == self.password_field.value or df.Password == self.password))].index
+        df.drop(i)
+        df.to_csv('psw.csv', header=False,
+                  index=False, encoding='utf-8')
+        self.psw.load_passwords()
 
-        self.column = ft.Column([self.service,divider, self.password, add])
+    def edit(self):
+        self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
+            new=False), autofocus=True, text_size=15, max_lines=1, capitalization=True)
+        self.password_field = ft.CupertinoTextField(
+            value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
+        divider = ft.Divider(height=20)
+        plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(
+            new=False), bgcolor=ft.Colors.WHITE, mini=True)
+        add = ft.Row([plus], alignment=ft.MainAxisAlignment.END)
+
+        self.column = ft.Column([self.service, divider, self.password, add])
 
         self.content = self.column
-        self.update()
-    def save(self, psw):
-        if self.service.value != "" and self.password.value != "":
+        if self.page:
+            self.update()
+
+    def save(self, new=True):
+        if self.service_field.value != "" and self.password_field.value != "":
 
             data = {
-                'Email': [global_email],
-                'Service': [self.service.value],
-                'Password': [self.password.value]
+                'Users': [global_email],
+                'Service': [self.service_field.value],
+                'Password': [self.password_field.value]
             }
 
             df = pd.DataFrame(data)
 
+            print(df)
             # Append the DataFrame to the CSV file
-            df.to_csv('psw.csv', mode='a', header=False, index=False, encoding='utf-8')
-            self.service.value = ""
-            self.password.value = ""
-            psw.load_passwords()
-        else:
-            print("Introduzca unos campos válidos")
+            df.to_csv('psw.csv', mode='a', header=False,
+                      index=False, encoding='utf-8')
 
+            if not new:
+                df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+                i = df[((df.Users == global_email) & (df.Service == self.service_field.value) & (
+                    df.Password == self.password_field.value))].index
+                df.drop(i)
+                df.to_csv('psw.csv', header=False,
+                          index=False, encoding='utf-8')
 
-
-class PasswordEditContainer(ft.Container):
-    def __init__(self, page, psw):
-        super().__init__()
-        self.error_text = SnackBarError(page)
-        self.service = ft.CupertinoTextField( placeholder_text="Servicio", on_submit=lambda e: self.save(page, psw), autofocus=True, text_size=15, max_lines=1, capitalization=True)
-        self.password = ft.CupertinoTextField(placeholder_text="Contraseña", on_submit=lambda e: self.save(page, psw),  text_size=15, max_lines=1)
-        divider = ft.Divider(height=20)
-        plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(page, psw), bgcolor=ft.Colors.WHITE, mini=True)
-        add = ft.Row([plus], alignment = ft.MainAxisAlignment.END)
-
-        self.column = ft.Column([self.service,divider, self.password, add, self.error_text])
-
-        controls = self.column
-
-        self.bgcolor = ft.Colors.BLUE_400
-        self.padding = 10
-        self.border_radius = 10
-        self.content = controls
-        self.shadow = ft.BoxShadow(
-            spread_radius=1,
-            blur_radius=30,
-            color=ft.Colors.BLUE_400,
-            blur_style=ft.ShadowBlurStyle.OUTER,
-        )
-
-    def save(self, page, psw):
-        if self.service.value != "" and self.password.value != "":
-            with open("psw.csv", mode="a", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f, delimiter=",")
-                writer.writerow(
-                    [global_email, self.service.value, self.password.value])
-            self.service.value = ""
-            self.password.value = ""
-            psw.load_passwords()
+            self.psw.load_passwords()
         else:
             self.error_text.show_error("Introduzca unos campos válidos")
-
 
 
 class Passwords_show(ft.GridView):
@@ -367,22 +362,16 @@ class Passwords_show(ft.GridView):
 
         containers = []
         df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-        user = list(df["User"])
-        print(user)
-        print(df.index.values.tolist())
-        with open("psw.csv", mode="r", newline="", encoding='utf-8') as psw:
-            reader = csv.reader(psw)
-            #print(type(reader), psw)
-            for row in reader:
-                #print(row)
-                if row[0] == self.email:
-                    containers.append((row[1], row[2]))
+        user = df.values.tolist()
+        for username, service, password in user:
+            if username == self.email:
+                containers.append((service, password))
 
         for service, password in containers:
-            self.controls.append(PasswordContainer(service, password))
+            self.controls.append(PasswordContainer(
+                service=service, password=password, page=self.page, psw=self))
         if self.page:
             self.page.update()
-    
 
     @ property
     def email(self):
@@ -414,5 +403,6 @@ class MainPage(ft.Row):
         self.controls = [row, add, back]
 
         def add_psw(page, psw):
-            psw.controls.append(PasswordEditContainer(page, psw))
+            psw.controls.append(PasswordContainer(page, create=True, psw=psw))
+            # psw.controls.append(PasswordEditContainer(page, psw))
             page.update()

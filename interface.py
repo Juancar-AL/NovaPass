@@ -39,12 +39,13 @@ def main(page: ft.Page):
     quit = cl.IconButtonRow(on_click=page_change,
                             icon=ft.Icons.EXIT_TO_APP_ROUNDED)
     about_page = cl.AboutPage(page_change)
+
+    psw_page = cl.Passwords_show(page)
+
     log_page = cl.data_page(
         "Iniciar sesión", log_inputs_data, page, change=page_change, new_page="main")
     reg_page = cl.data_page(
         "Registrarse", reg_inputs_data, page, change=page_change, new_page="main")
-
-    psw_page = cl.Passwords_show(page)
 
     main_page = cl.MainPage(page_change, page, psw_page)
 

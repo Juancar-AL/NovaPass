@@ -1,3 +1,10 @@
+# Dear programmer,
+# When I wrote this code only God and I knew how it worked.
+# Now, only God knows.
+# Good luck trying to optimize this code.
+# Hours wasted on this code: 0
+
+
 import flet as ft
 import csv
 import time
@@ -286,6 +293,12 @@ class PasswordContainer(ft.Container):
 
             self.content = self.controls
             self.update()
+
+    def delete(self, psw):
+        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        df1 = df[(df["User"] == global_email) & (df["Service"] ==
+                                                 self.service) & (df["Password"] == self.password)]
+        df.drop(df1.index, inplace=True)
 
     def delete(self):
         df = pd.read_csv("psw.csv", encoding="utf-8", header=0)

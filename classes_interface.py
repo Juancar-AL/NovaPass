@@ -388,7 +388,7 @@ class MainPage(ft.Row):
         super().__init__()
 
         search_row = ft.SearchBar(
-            bar_hint_text="Busca las contraseñas de tus servicios", bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400)
+            bar_hint_text="Busca las contraseñas de tus servicios", capitalization=True, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: print("Búsqueda"))
         row = ft.Row(
             [IconButtonRow(ft.Icons.PERSON, on_click=print), ft.VerticalDivider(width=130), search_row], spacing=30)
 
@@ -404,5 +404,4 @@ class MainPage(ft.Row):
 
         def add_psw(page, psw):
             psw.controls.append(PasswordContainer(page, create=True, psw=psw))
-            # psw.controls.append(PasswordEditContainer(page, psw))
             page.update()

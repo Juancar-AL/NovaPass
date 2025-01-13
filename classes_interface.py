@@ -1,3 +1,10 @@
+# Dear programmer,
+# When I wrote this code only God and I knew how it worked.
+# Now, only God knows.
+# Good luck trying to optimize this code.
+# Hours wasted on this code: 0
+
+
 import flet as ft
 import csv
 import time
@@ -263,7 +270,7 @@ class PasswordContainer(ft.Container):
         self.clicked = not self.clicked
         if self.clicked:
             edit = ft.FloatingActionButton(icon=ft.Icons.EDIT, on_click=lambda e: self.edit(),  bgcolor=ft.Colors.WHITE)
-            delete = ft.FloatingActionButton(icon=ft.Icons.DELETE, on_click=lambda e: print("Test"),  bgcolor=ft.Colors.RED)
+            delete = ft.FloatingActionButton(icon=ft.Icons.DELETE, on_click=lambda e: self.delete(),  bgcolor=ft.Colors.RED)
 
             row = ft.Row([edit, delete], alignment=ft.MainAxisAlignment.CENTER)
 
@@ -274,6 +281,11 @@ class PasswordContainer(ft.Container):
 
             self.content = self.controls
             self.update()
+    def delete(self, psw):
+        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        df1 = df[(df["User"] == global_email) & (df["Service"] == self.service) & (df["Password"] == self.password)]
+        df.drop(df1.index, inplace=True)
+        
 
     def edit(self):
         self.service = ft.CupertinoTextField( value=self.service, on_submit=lambda e: print("Test"), autofocus=True, text_size=15, max_lines=1, capitalization=True)

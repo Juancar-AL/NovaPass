@@ -131,9 +131,9 @@ class MainInputs(ft.Column):
             password2 = data[2]
             if self.validate_email(global_email, content=s, mode="register") and self.validate_passwords(password, password2):
                 df = pd.DataFrame(
-                    data={"Users": [global_email], "Password": [password]})
+                    data={"User": [global_email], "Password": [password]})
                 df.to_csv("users.csv", mode="a", index=False,
-                          header=False, encoding="utf-8")
+                          header=0, encoding="utf-8")
                 self.clear_inputs()
                 change(new_page)
         elif len(self.inputs) == 2:
@@ -248,21 +248,24 @@ class PasswordContainer(ft.Container):
         self.service = service
         self.password = password
         super().__init__()
-        text = ft.Container(content=ft.Text(value="Servicio"),
-                            bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-        service = ft.Text(
-            value=self.service)
-        text2 = ft.Container(content=ft.Text(
-            value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-        password = ft.Text(value=self.password)
+        
+        if not self.create:
+            text = ft.Container(content=ft.Text(value="Servicio"),
+                                bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
+            service = ft.Text(
+                value=self.service)
+            text2 = ft.Container(content=ft.Text(
+                value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
+            password = ft.Text(value=self.password)
 
-        self.controls = ft.Column(
-            [text, service, text2, password, self.error_text])
+            self.content = ft.Column(
+                [text, service, text2, password, self.error_text])
+        else:
+            self.edit()
 
         self.bgcolor = ft.Colors.BLUE_400
         self.padding = 10
         self.border_radius = 10
-        self.content = self.controls
         self.shadow = ft.BoxShadow(
             spread_radius=1,
             blur_radius=30,
@@ -273,8 +276,6 @@ class PasswordContainer(ft.Container):
         self.on_click = lambda e: self.click()
         self.clicked = False
 
-        if self.create:
-            self.edit()
 
     def click(self):
         self.clicked = not self.clicked
@@ -294,20 +295,15 @@ class PasswordContainer(ft.Container):
             self.content = self.controls
             self.update()
 
-    def delete(self, psw):
+    def delete(self):
         df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
         df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                  self.service) & (df["Password"] == self.password)]
         df.drop(df1.index, inplace=True)
-
-    def delete(self):
-        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-        i = df[((df.Users == global_email) & (df.Service == self.service_field.value or df.Service == self.service) & (
-            df.Password == self.password_field.value or df.Password == self.password))].index
-        df.drop(i)
-        df.to_csv('psw.csv', header=False,
+        df.to_csv('psw.csv', header=["User", "Service", "Password"],
                   index=False, encoding='utf-8')
         self.psw.load_passwords()
+
 
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
@@ -319,9 +315,8 @@ class PasswordContainer(ft.Container):
             new=False), bgcolor=ft.Colors.WHITE, mini=True)
         add = ft.Row([plus], alignment=ft.MainAxisAlignment.END)
 
-        self.column = ft.Column([self.service, divider, self.password, add])
+        self.content = ft.Column([self.service_field, divider, self.password_field, add])
 
-        self.content = self.column
         if self.page:
             self.update()
 
@@ -329,24 +324,23 @@ class PasswordContainer(ft.Container):
         if self.service_field.value != "" and self.password_field.value != "":
 
             data = {
-                'Users': [global_email],
+                'User': [global_email],
                 'Service': [self.service_field.value],
                 'Password': [self.password_field.value]
             }
 
             df = pd.DataFrame(data)
 
-            print(df)
             # Append the DataFrame to the CSV file
-            df.to_csv('psw.csv', mode='a', header=False,
+            df.to_csv('psw.csv', mode='a', header=0,
                       index=False, encoding='utf-8')
 
             if not new:
                 df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-                i = df[((df.Users == global_email) & (df.Service == self.service_field.value) & (
+                i = df[((df.User == global_email) & (df.Service == self.service_field.value) & (
                     df.Password == self.password_field.value))].index
                 df.drop(i)
-                df.to_csv('psw.csv', header=False,
+                df.to_csv('psw.csv', header=["User", "Service", "Password"],
                           index=False, encoding='utf-8')
 
             self.psw.load_passwords()
@@ -416,5 +410,5 @@ class MainPage(ft.Row):
         self.controls = [row, add, back]
 
         def add_psw(page, psw):
-            psw.controls.append(PasswordContainer(page, create=True, psw=psw))
+            psw.controls.append(PasswordContainer(page=page, psw=psw, create=True))
             page.update()

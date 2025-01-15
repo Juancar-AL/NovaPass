@@ -6,7 +6,6 @@
 
 
 import flet as ft
-import csv
 import time
 import pandas as pd
 
@@ -14,12 +13,15 @@ global global_email
 global_email = None
 
 
+# Configuración barra para muestra de errores
 class SnackBarError(ft.SnackBar):
     def __init__(self, page):
         super().__init__(content=ft.Text("Error"), bgcolor="red")
         self.page = page
 
     def show_error(self, message):
+
+        # Configuración visual
         self.content = ft.Text(message)
         self.open = True
         self.page.update()
@@ -28,11 +30,13 @@ class SnackBarError(ft.SnackBar):
         self.page.update()
 
 
+# Clase para la creación de los campos principales de registro e inicio de sesión
 class MainInputs(ft.Column):
 
     def __init__(self, function, inputs_data, page=None, change=None, new_page=None):
 
         super().__init__()
+        # Organización visual de los campos
         text = ft.Text(function, theme_style=ft.TextThemeStyle.HEADLINE_LARGE)
         self.error_text = SnackBarError(page)
         # Crear los campos de texto dinámicamente
@@ -61,41 +65,47 @@ class MainInputs(ft.Column):
             data.append(input_field.value)
 
     def validate_email(self, email, password=None, content=None, mode="register"):
-        """
-        Valida el correo electrónico y la contraseña según el modo.
+        # Valida el correo electrónico y la contraseña según el modo.
 
-        mode: "register" para validar registros, "login" para validar inicios de sesión.
-        """
+        df = pd.read_csv("users.csv", encoding="utf-8", header=0)
+        users = df["User"]
+        users_list = users.values.tolist()
+        df2 = df[["User", "Password"]]
+        df_list = df2.values.tolist()
+        # mode: "register" para validar registros, "login" para validar inicios de sesión.
         s_email = email.split("@", 1)
         s_email2 = s_email[-1].replace(".", "")
 
+        # Comprobación de que el correo introducido esté en la base de datos
         if "@" not in email or "." not in s_email[-1] or s_email[0] == "" or s_email2.isalpha() == False:
             self.error_text.show_error("Por favor introduzca un correo válido")
             return False
 
+        # Comprobaciones modo
         if mode == "register":
-            if email in content:
+            if email in users_list:
                 self.error_text.show_error("El email ya ha sido registrado")
                 return False
             return True
 
         elif mode == "login":
-            if email not in content:
+            if email not in users_list:
                 self.error_text.show_error(
                     "No existe ninguna cuenta con ese correo electrónico"
                 )
                 return False
 
-            for line in content.splitlines():
+            for i, j in df_list:
                 try:
-                    stored_email, stored_password = line.split(",")
+                    stored_email, stored_password = i, j
+                    print(stored_email == email, stored_password ==
+                          password, stored_password, password)
                     if stored_email == email:
                         if stored_password == password:
                             return True
                         else:
                             self.error_text.show_error(
                                 "Por favor, revise los campos introducidos")
-                            return False
                 except ValueError:
                     self.error_text.show_error(
                         "Ha habido un error en el archivo")
@@ -121,15 +131,13 @@ class MainInputs(ft.Column):
         global global_email
         data = []
 
-        s = pd.read_csv("users.csv", encoding="utf-8", header=0)
-
         self.update_data(data)
 
         if len(self.inputs) == 3:
             global_email = data[0]
             password = data[1]
             password2 = data[2]
-            if self.validate_email(global_email, content=s, mode="register") and self.validate_passwords(password, password2):
+            if self.validate_email(global_email, mode="register") and self.validate_passwords(password, password2):
                 df = pd.DataFrame(
                     data={"User": [global_email], "Password": [password]})
                 df.to_csv("users.csv", mode="a", index=False,
@@ -143,18 +151,20 @@ class MainInputs(ft.Column):
             password_view.email = global_email  # Properly set the email
             self.password = data[1]
 
-                          if global_email == "root" or self.validate_email(global_email, self.password, s, mode="login"):
-                          change(new_page)
+            if global_email == "root" or self.validate_email(global_email, self.password, mode="login"):
+                change(new_page)
 
-                              class logo(ft.Image):
-                              def __init__(self):
+
+class logo(ft.Image):
+    def __init__(self):
         super().__init__()
         self.src = "assets/16792526538172.jpg"
         self.height = 200
         self.fit = ft.ImageFit.FILL
 
-                              class IconButtonRow(ft.Row):
-                              def __init__(self, icon, on_click=None, new_page=None, alignment=ft.MainAxisAlignment.END):
+
+class IconButtonRow(ft.Row):
+    def __init__(self, icon, on_click=None, new_page=None, alignment=ft.MainAxisAlignment.END):
         super().__init__(
             controls=[
                 ft.Column(
@@ -170,70 +180,72 @@ class MainInputs(ft.Column):
                     horizontal_alignment=ft.CrossAxisAlignment.END,
                 )
             ],
-                alignment=alignment,
-                vertical_alignment=ft.CrossAxisAlignment.END,
-            )
+            alignment=alignment,
+            vertical_alignment=ft.CrossAxisAlignment.END,
+        )
 
-            class AboutPage(ft.Row):
 
-                def __init__(self, function):
+class AboutPage(ft.Row):
 
-                login_button = ft.CupertinoFilledButton(
-                content=ft.Text(
-              "Iniciar sesión"
+    def __init__(self, function):
+
+        login_button = ft.CupertinoFilledButton(
+            content=ft.Text(
+                "Iniciar sesión"
             ),
-                opacity_on_click=0.3,
-                on_click=lambda e: function("login"),
-                width=500,
-            )
+            opacity_on_click=0.3,
+            on_click=lambda e: function("login"),
+            width=500,
+        )
 
-                register_button = ft.CupertinoFilledButton(
-                content=ft.Text(
-              "Registrarse"
+        register_button = ft.CupertinoFilledButton(
+            content=ft.Text(
+                "Registrarse"
             ),
-                opacity_on_click=0.3,
-                on_click=lambda e: function("register"),
-                width=500,
-            )
+            opacity_on_click=0.3,
+            on_click=lambda e: function("register"),
+            width=500,
+        )
 
-                super().__init__()
+        super().__init__()
 
-                # Create buttons
-                AboutPage.login_button = login_button
-                AboutPage.register_button = register_button
+        # Create buttons
+        AboutPage.login_button = login_button
+        AboutPage.register_button = register_button
 
-                column = ft.Column(
-                [
-              logo(),
-               ft.Column(
+        column = ft.Column(
+            [
+                logo(),
+                ft.Column(
                     [login_button, register_button],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+        )
 
-                self.alignment = ft.MainAxisAlignment.CENTER
-                self.vertical_alignment = ft.CrossAxisAlignment.CENTER
-                self.expand = True
-                self.controls = [column]
+        self.alignment = ft.MainAxisAlignment.CENTER
+        self.vertical_alignment = ft.CrossAxisAlignment.CENTER
+        self.expand = True
+        self.controls = [column]
 
-                class data_page(ft.Row):
-                def __init__(self, text, inputs_data, page, change, new_page):
 
-                super().__init__()
+class data_page(ft.Row):
+    def __init__(self, text, inputs_data, page, change, new_page):
 
-                column = ft.Column([logo(), MainInputs(text, inputs_data, page, change, new_page)],
-                               alignment=ft.MainAxisAlignment.CENTER,
-                               horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                               )
+        super().__init__()
 
-                self.expand = True
-                self.alignment = ft.MainAxisAlignment.CENTER
-                self.vertical_alignment = ft.CrossAxisAlignment.CENTER
+        column = ft.Column([logo(), MainInputs(text, inputs_data, page, change, new_page)],
+                           alignment=ft.MainAxisAlignment.CENTER,
+                           horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                           )
 
-                self.controls = [column]
+        self.expand = True
+        self.alignment = ft.MainAxisAlignment.CENTER
+        self.vertical_alignment = ft.CrossAxisAlignment.CENTER
+
+        self.controls = [column]
 
 
 class PasswordContainer(ft.Container):
@@ -254,8 +266,9 @@ class PasswordContainer(ft.Container):
                 value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
             password = ft.Text(value=self.password)
 
-            self.content = ft.Column(
+            self.controls = ft.Column(
                 [text, service, text2, password, self.error_text])
+            self.content = self.controls
         else:
             self.edit()
 
@@ -272,9 +285,9 @@ class PasswordContainer(ft.Container):
         self.on_click = lambda e: self.click()
         self.clicked = False
 
-                    def click(self):
+    def click(self):
         self.clicked = not self.clicked
-                if self.clicked:
+        if self.clicked:
             edit = ft.FloatingActionButton(
                 icon=ft.Icons.EDIT, on_click=lambda e: self.edit(),  bgcolor=ft.Colors.WHITE)
             delete = ft.FloatingActionButton(
@@ -283,12 +296,12 @@ class PasswordContainer(ft.Container):
             row = ft.Row([edit, delete], alignment=ft.MainAxisAlignment.CENTER)
 
             self.content = row
-                self.update()
+            self.update()
 
-                if not self.clicked:
+        if not self.clicked:
 
             self.content = self.controls
-                self.update()
+            self.update()
 
     def delete(self):
         df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
@@ -299,30 +312,30 @@ class PasswordContainer(ft.Container):
                   index=False, encoding='utf-8')
         self.psw.load_passwords()
 
-
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
-            new = False), autofocus=True, text_size=15, max_lines=1, capitalization=True)
-            self.password_field= ft.CupertinoTextField(
-                value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
-                divider = ft.Divider(height=20)
-                plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(
-            new = False), bgcolor=ft.Colors.WHITE, mini=True)
-                add = ft.Row([plus], alignment=ft.MainAxisAlignment.END)
+            new=False), autofocus=True, text_size=15, max_lines=1, capitalization=True)
+        self.password_field = ft.CupertinoTextField(
+            value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
+        divider = ft.Divider(height=20)
+        plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(
+            new=False), bgcolor=ft.Colors.WHITE, mini=True)
+        add = ft.Row([plus], alignment=ft.MainAxisAlignment.END)
 
-        self.content = ft.Column([self.service_field, divider, self.password_field, add])
+        self.content = ft.Column(
+            [self.service_field, divider, self.password_field, add])
 
         if self.page:
             self.update()
 
-                def save(self, new=True):
-                if self.service_field.value != "" and self.password_field.value != "":
+    def save(self, new=True):
+        if self.service_field.value != "" and self.password_field.value != "":
 
             data = {
                 'User': [global_email],
-                'Service': [self.service_field.value],
+                'Service': [self.service_field.value.capitalize()],
                 'Password': [self.password_field.value]
-                }
+            }
 
             df = pd.DataFrame(data)
 
@@ -330,64 +343,68 @@ class PasswordContainer(ft.Container):
             df.to_csv('psw.csv', mode='a', header=0,
                       index=False, encoding='utf-8')
 
-                if not new:
-                df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-                i = df[((df.User == global_email) & (df.Service == self.service_field.value) & (
-                    df.Password == self.password_field.value))].index
-                df.drop(i)
-                df.to_csv('psw.csv', header=["User", "Service", "Password"],
-                          index=False, encoding='utf-8')
-
-                self.psw.load_passwords()
-                else:
-                self.error_text.show_error("Introduzca unos campos válidos")
+            if not new:
+                self.delete()
+        else:
+            self.error_text.show_error("Introduzca unos campos válidos")
 
 
-                class Passwords_show(ft.GridView):
-                def __init__(self, page):
+class Passwords_show(ft.GridView):
+    def __init__(self, page):
+
         self.page = page
-                global global_email
-                self.email = global_email
-                super().__init__()
-                self.child_aspect_ratio = 1.7
-                self.max_extent = 400
-                self.spacing = 6
-                self.run_spacing = 6
-                self.runs_count = 7
-                self.expand = 1
+        global global_email
+        self.email = global_email
 
-                def load_passwords(self):
-        """Load password containers based on the email."""
-                self.controls = []
-                if not self.email:
-                return
+        super().__init__()
 
-                containers = []
-                df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-                user = df.values.tolist()
-                for username, service, password in user:
-                if username == self.email:
-                containers.append((service, password))
+        # Configuración visual de la rejilla
+        self.child_aspect_ratio = 1.7
+        self.max_extent = 400
+        self.spacing = 6
+        self.run_spacing = 6
+        self.runs_count = 7
+        self.expand = 1
 
-                for service, password in containers:
-                self.controls.append(PasswordContainer(
-                service = service, password=password, page=self.page, psw=self))
-                if self.page:
-                    self.page.update()
+    # Cargar las contraseñas en función del nombre de usuario
 
-                    @ property
-                    def email(self):
-                return global_email  # Always fetch the latest value
+    def load_passwords(self):
 
-                @ email.setter
-                    def email(self, value):
+        self.controls = []
+        if not self.email:
+            return
+
+        containers = []
+
+        # Cargar los valores desde la base de datos
+        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        df1 = df[df["User"] == global_email]
+        df1 = df1.sort_values(by=["Service"])
+        user = df1.values.tolist()
+
+        # Añadir las contraseñas individualmente a cada casilla de la clase PasswordContainer
+        for username, service, password in user:
+            containers.append((service, password))
+
+        for service, password in containers:
+            self.controls.append(PasswordContainer(
+                service=service, password=password, page=self.page, psw=self))
+        if self.page:
+            self.page.update()
+
+    @ property
+    def email(self):
+        return global_email  # Siempre recoger el valor más actualizado
+
+    @ email.setter
+    def email(self, value):
         self._email = value
-                self.load_passwords()
+        self.load_passwords()
 
 
-                class MainPage(ft.Row):
-                def __init__(self, function, page, psw):
-                super().__init__()
+class MainPage(ft.Row):
+    def __init__(self, function, page, psw):
+        super().__init__()
 
         search_row = ft.SearchBar(
             bar_hint_text="Busca las contraseñas de tus servicios", capitalization=True, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: print("Búsqueda"))
@@ -400,10 +417,11 @@ class PasswordContainer(ft.Container):
             on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
         add = IconButtonRow(on_click=lambda e: add_psw(page, psw),
-                           icon=ft.icons.ADD_CIRCLE)
+                            icon=ft.icons.ADD_CIRCLE)
 
         self.controls = [row, add, back]
 
         def add_psw(page, psw):
-            psw.controls.append(PasswordContainer(page=page, psw=psw, create=True))
+            psw.controls.append(PasswordContainer(
+                page=page, psw=psw, create=True))
             page.update()

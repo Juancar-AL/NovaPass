@@ -72,6 +72,7 @@ class MainInputs(ft.Column):
         users_list = users.values.tolist()
         df2 = df[["User", "Password"]]
         df_list = df2.values.tolist()
+
         # mode: "register" para validar registros, "login" para validar inicios de sesión.
         s_email = email.split("@", 1)
         s_email2 = s_email[-1].replace(".", "")
@@ -97,9 +98,7 @@ class MainInputs(ft.Column):
 
             for i, j in df_list:
                 try:
-                    stored_email, stored_password = i, j
-                    print(stored_email == email, stored_password ==
-                          password, stored_password, password)
+                    stored_email, stored_password = i, str(j)
                     if stored_email == email:
                         if stored_password == password:
                             return True
@@ -112,7 +111,8 @@ class MainInputs(ft.Column):
                     return False
 
         return False
-
+    
+    #Validar las contraseñas (que esté presente en el input y que conincida con la segunda contraseña)
     def validate_passwords(self, password, password2=None):
         if not password:
             self.error_text.show_error("Por favor introduzca una contraseña")
@@ -122,11 +122,13 @@ class MainInputs(ft.Column):
             return False
         return True
 
+    #Limpiar los valores de los campos de inicio y registro
     def clear_inputs(self):
         for input_field in self.inputs:
             input_field.value = ""
             input_field.update()
 
+    #Tomar los valores de los campos de inicio y registro
     def get_inputs(self, page, change, new_page):
         global global_email
         data = []
@@ -145,16 +147,16 @@ class MainInputs(ft.Column):
                 self.clear_inputs()
                 change(new_page)
         elif len(self.inputs) == 2:
-            # Set global_email to the provided email
+            # Establecer el email global al email indicado
             global_email = data[0]
             password_view = Passwords_show(page)
-            password_view.email = global_email  # Properly set the email
+            password_view.email = global_email  # Establece el email de forma correcta
             self.password = data[1]
 
             if global_email == "root" or self.validate_email(global_email, self.password, mode="login"):
                 change(new_page)
 
-
+#Clase que almacena el logo de la aplicación
 class logo(ft.Image):
     def __init__(self):
         super().__init__()
@@ -162,7 +164,7 @@ class logo(ft.Image):
         self.height = 200
         self.fit = ft.ImageFit.FILL
 
-
+# Botón para añdir botones
 class IconButtonRow(ft.Row):
     def __init__(self, icon, on_click=None, new_page=None, alignment=ft.MainAxisAlignment.END):
         super().__init__(
@@ -185,6 +187,7 @@ class IconButtonRow(ft.Row):
         )
 
 
+#Clase que inicializa la página principal
 class AboutPage(ft.Row):
 
     def __init__(self, function):
@@ -231,6 +234,7 @@ class AboutPage(ft.Row):
         self.controls = [column]
 
 
+#Clase que inicializa la clase con los datos
 class data_page(ft.Row):
     def __init__(self, text, inputs_data, page, change, new_page):
 
@@ -248,6 +252,7 @@ class data_page(ft.Row):
         self.controls = [column]
 
 
+#Clase que inicializa el contenedor de la contraseña
 class PasswordContainer(ft.Container):
     def __init__(self, page, psw, service=None, password=None, create=False):
         self.psw = psw
@@ -314,7 +319,7 @@ class PasswordContainer(ft.Container):
 
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
-            new=False), autofocus=True, text_size=15, max_lines=1, capitalization=True)
+            new=False), autofocus=True, text_size=15, max_lines=1, capitalization= ft.TextCapitalization.SENTENCES)
         self.password_field = ft.CupertinoTextField(
             value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
         divider = ft.Divider(height=20)
@@ -406,8 +411,10 @@ class MainPage(ft.Row):
     def __init__(self, function, page, psw):
         super().__init__()
 
+        self.psw = psw
+
         search_row = ft.SearchBar(
-            bar_hint_text="Busca las contraseñas de tus servicios", capitalization=True, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: print("Búsqueda"))
+            bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: search())
         row = ft.Row(
             [IconButtonRow(ft.Icons.PERSON, on_click=print), ft.VerticalDivider(width=130), search_row], spacing=30)
 
@@ -421,7 +428,13 @@ class MainPage(ft.Row):
 
         self.controls = [row, add, back]
 
-        def add_psw(page, psw):
+        def add_psw(page):
             psw.controls.append(PasswordContainer(
                 page=page, psw=psw, create=True))
             page.update()
+
+        def search():
+            df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+            df1 = df[(df["User"] == global_email) & (df["Service"] ==
+                                                 search_row.value)]
+            print(df1)

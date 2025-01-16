@@ -25,7 +25,7 @@ def main(page: ft.Page):
         {"placeholder_text": email_text},
         {"placeholder_text": password_text, "password": True,
             "can_reveal_password": True},
-        {"placeholder_text": f"Confirmar {password_text}".capitalize(), "password": True,
+        {"placeholder_text": f"Confirmar {password_text}", "password": True,
             "can_reveal_password": True},
     ]
 

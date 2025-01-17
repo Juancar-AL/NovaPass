@@ -8,6 +8,8 @@
 import flet as ft
 import time
 import pandas as pd
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
 global global_email
 global_email = None
@@ -141,7 +143,7 @@ class MainInputs(ft.Column):
             password2 = data[2]
             if self.validate_email(global_email, mode="register") and self.validate_passwords(password, password2):
                 df = pd.DataFrame(
-                    data={"User": [global_email], "Password": [password]})
+                    data={"User": [encoder.encrypt(global_email)], "Password": [encoder.encrypt(password)]})
                 df.to_csv("users.csv", mode="a", index=False,
                           header=0, encoding="utf-8")
                 self.clear_inputs()
@@ -155,7 +157,7 @@ class MainInputs(ft.Column):
 
             if global_email == "root" or self.validate_email(global_email, self.password, mode="login"):
                 change(new_page)
-            elif global_email == "nano" or self.validate_email(global_email, self.password, mode="login"):
+            elif (global_email == "nano" and self.password == "33") or self.validate_email(global_email, self.password, mode="login"):
                 change("nano")
 
 # Clase que almacena el logo de la aplicación
@@ -321,7 +323,8 @@ class PasswordContainer(ft.Container):
         df.drop(df1.index, inplace=True)
         df.to_csv('psw.csv', header=["User", "Service", "Password"],
                   index=False, encoding='utf-8')
-        self.psw.load_passwords()
+        self.psw.load_passwords(df=pd.read_csv(
+            "psw.csv", encoding="utf-8", header=0))
 
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
@@ -343,9 +346,9 @@ class PasswordContainer(ft.Container):
         if self.service_field.value != "" and self.password_field.value != "":
 
             data = {
-                'User': [global_email],
-                'Service': [self.service_field.value.capitalize()],
-                'Password': [self.password_field.value]
+                'User': [encoder.encrypt(global_email)],
+                'Service': [encoder.encrypt(self.service_field.value.capitalize())],
+                'Password': [encoder.encrypt(self.password_field.value)]
             }
 
             df = pd.DataFrame(data)
@@ -379,8 +382,7 @@ class Passwords_show(ft.GridView):
 
     # Cargar las contraseñas en función del nombre de usuario
 
-    def load_passwords(self, df=pd.read_csv(
-            "psw.csv", encoding="utf-8", header=0)):
+    def load_passwords(self, df):
 
         self.controls = []
         if not self.email:
@@ -410,7 +412,8 @@ class Passwords_show(ft.GridView):
     @ email.setter
     def email(self, value):
         self._email = value
-        self.load_passwords()
+        self.load_passwords(df=pd.read_csv(
+            "psw.csv", encoding="utf-8", header=0))
 
 
 class MainPage(ft.Row):
@@ -442,8 +445,11 @@ class MainPage(ft.Row):
 
         def search():
             df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-            df1 = df[(df["User"] == global_email) & (df["Service"] ==
+            if search_row.value != "":
+                df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                      search_row.value)]
+            else:
+                df1 = df
             if df1.size == 0:
                 self.error_text.show_error(
                     "No se ha encontrado ninguna contraseña que corresponda a ese servicio")
@@ -480,6 +486,29 @@ class NanoPage(ft.Column):
                                        alignment=ft.alignment.center,  # Center the video
                                        bgcolor=ft.Colors.BLACK  # Optional: Add a background color
                                        )
+        
+        video_row = ft.Row([video_container], alignment=ft.MainAxisAlignment.CENTER)
 
         # Add the video player to the controls
-        self.controls = [video_container]
+        self.controls = [video_row]
+
+class encoder():
+    def __init__(self):
+        self.key = "YELLOW SUBMARINE".encode("utf-8")
+        self.cipher = None
+    def encrypt(self,data):
+        self.cipher = AES.new(self.key, AES.MODE_EAX)
+        ciphertext, self.tag = self.cipher.encrypt_and_digest(data)
+        self.nonce = self.cipher.nonce
+
+        return ciphertext
+
+    def decrypt(self,data):
+        cipher = AES.new(self.key, AES.MODE_EAX, self.nonce)
+        data2 = cipher.decrypt_and_verify(data, self.tag)
+        return data2
+    
+encoder = encoder()
+print(encoder.encrypt("TEST".encode("utf-8")))
+print(str(encoder.decrypt(encoder.encrypt("TEST".encode("utf-8"))), ))
+

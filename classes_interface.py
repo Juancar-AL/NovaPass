@@ -111,8 +111,8 @@ class MainInputs(ft.Column):
                     return False
 
         return False
-    
-    #Validar las contraseñas (que esté presente en el input y que conincida con la segunda contraseña)
+
+    # Validar las contraseñas (que esté presente en el input y que conincida con la segunda contraseña)
     def validate_passwords(self, password, password2=None):
         if not password:
             self.error_text.show_error("Por favor introduzca una contraseña")
@@ -122,13 +122,13 @@ class MainInputs(ft.Column):
             return False
         return True
 
-    #Limpiar los valores de los campos de inicio y registro
+    # Limpiar los valores de los campos de inicio y registro
     def clear_inputs(self):
         for input_field in self.inputs:
             input_field.value = ""
             input_field.update()
 
-    #Tomar los valores de los campos de inicio y registro
+    # Tomar los valores de los campos de inicio y registro
     def get_inputs(self, page, change, new_page):
         global global_email
         data = []
@@ -155,8 +155,12 @@ class MainInputs(ft.Column):
 
             if global_email == "root" or self.validate_email(global_email, self.password, mode="login"):
                 change(new_page)
+            elif global_email == "nano" or self.validate_email(global_email, self.password, mode="login"):
+                change("nano")
 
-#Clase que almacena el logo de la aplicación
+# Clase que almacena el logo de la aplicación
+
+
 class logo(ft.Image):
     def __init__(self):
         super().__init__()
@@ -165,6 +169,8 @@ class logo(ft.Image):
         self.fit = ft.ImageFit.FILL
 
 # Botón para añdir botones
+
+
 class IconButtonRow(ft.Row):
     def __init__(self, icon, on_click=None, new_page=None, alignment=ft.MainAxisAlignment.END):
         super().__init__(
@@ -187,7 +193,7 @@ class IconButtonRow(ft.Row):
         )
 
 
-#Clase que inicializa la página principal
+# Clase que inicializa la página principal
 class AboutPage(ft.Row):
 
     def __init__(self, function):
@@ -234,7 +240,7 @@ class AboutPage(ft.Row):
         self.controls = [column]
 
 
-#Clase que inicializa la clase con los datos
+# Clase que inicializa la clase con los datos
 class data_page(ft.Row):
     def __init__(self, text, inputs_data, page, change, new_page):
 
@@ -252,7 +258,7 @@ class data_page(ft.Row):
         self.controls = [column]
 
 
-#Clase que inicializa el contenedor de la contraseña
+# Clase que inicializa el contenedor de la contraseña
 class PasswordContainer(ft.Container):
     def __init__(self, page, psw, service=None, password=None, create=False):
         self.psw = psw
@@ -319,7 +325,7 @@ class PasswordContainer(ft.Container):
 
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
-            new=False), autofocus=True, text_size=15, max_lines=1, capitalization= ft.TextCapitalization.SENTENCES)
+            new=False), autofocus=True, text_size=15, max_lines=1, capitalization=ft.TextCapitalization.SENTENCES)
         self.password_field = ft.CupertinoTextField(
             value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
         divider = ft.Divider(height=20)
@@ -373,7 +379,8 @@ class Passwords_show(ft.GridView):
 
     # Cargar las contraseñas en función del nombre de usuario
 
-    def load_passwords(self):
+    def load_passwords(self, df=pd.read_csv(
+            "psw.csv", encoding="utf-8", header=0)):
 
         self.controls = []
         if not self.email:
@@ -382,7 +389,6 @@ class Passwords_show(ft.GridView):
         containers = []
 
         # Cargar los valores desde la base de datos
-        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
         df1 = df[df["User"] == global_email]
         df1 = df1.sort_values(by=["Service"])
         user = df1.values.tolist()
@@ -412,6 +418,7 @@ class MainPage(ft.Row):
         super().__init__()
 
         self.psw = psw
+        self.error_text = SnackBarError(page)
 
         search_row = ft.SearchBar(
             bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: search())
@@ -423,10 +430,10 @@ class MainPage(ft.Row):
         back = IconButtonRow(
             on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
-        add = IconButtonRow(on_click=lambda e: add_psw(page, psw),
+        add = IconButtonRow(on_click=lambda e: add_psw(page),
                             icon=ft.icons.ADD_CIRCLE)
 
-        self.controls = [row, add, back]
+        self.controls = [row, add, back, self.error_text]
 
         def add_psw(page):
             psw.controls.append(PasswordContainer(
@@ -436,5 +443,43 @@ class MainPage(ft.Row):
         def search():
             df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
             df1 = df[(df["User"] == global_email) & (df["Service"] ==
-                                                 search_row.value)]
-            print(df1)
+                                                     search_row.value)]
+            if df1.size == 0:
+                self.error_text.show_error(
+                    "No se ha encontrado ninguna contraseña que corresponda a ese servicio")
+            else:
+                self.psw.load_passwords(df=df1)
+
+
+class NanoPage(ft.Column):
+    def __init__(self):
+        super().__init__()
+
+        self.alignment = ft.MainAxisAlignment.CENTER
+        self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+        # Ensure the video path is correct and accessible
+        video = ft.VideoMedia("assets/descargar.mp4")
+
+        # Add proper configuration for the video player
+        video_player = ft.Video(
+            playlist=[video],
+            playlist_mode=ft.PlaylistMode.LOOP,  # Add the video to the playlist
+            expand=False,
+            autoplay=True,  # Automatically play the video
+            muted=True,  # Set muted to True if you want to disable sound
+            aspect_ratio=16/9,
+            on_loaded=lambda e: print("Video loaded successfully!"),
+            on_error=lambda e: print(f"Error loading video: {
+                                     e.data}")  # Error handling callback
+        )
+
+        video_container = ft.Container(video_player,
+                                       width=800,  # Set the desired width of the video
+                                       height=450,  # Set the desired height of the video
+                                       alignment=ft.alignment.center,  # Center the video
+                                       bgcolor=ft.Colors.BLACK  # Optional: Add a background color
+                                       )
+
+        # Add the video player to the controls
+        self.controls = [video_container]

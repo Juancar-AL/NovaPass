@@ -1,5 +1,6 @@
 import flet as ft
 import classes_interface as cl
+import pandas as pd
 
 
 def main(page: ft.Page):
@@ -12,7 +13,8 @@ def main(page: ft.Page):
             page.controls.extend(pages.get(new_page, []))
             page.update()
             if new_page == "main":
-                psw_page.load_passwords()
+                psw_page.load_passwords(df=pd.read_csv(
+                    "psw.csv", encoding="utf-8", header=0))
             page.update()
         else:
             page.window.close()
@@ -52,12 +54,15 @@ def main(page: ft.Page):
     back_button = cl.IconButtonRow(
         on_click=page_change, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
+    nano_page = cl.NanoPage()
+
     # Diccionario de páginas
     pages = {
         "welcome": [quit, about_page],
         "login": [back_button, log_page],
         "register": [back_button, reg_page],
-        "main": [main_page, psw_page]
+        "main": [main_page, psw_page],
+        "nano": [back_button, nano_page]
     }
 
     # Inicializar la página de bienvenida

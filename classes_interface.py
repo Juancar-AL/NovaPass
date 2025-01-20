@@ -5,7 +5,6 @@
 # Hours wasted on this code: 0
 
 
-import base64
 import flet as ft
 import time
 import pandas as pd
@@ -165,7 +164,6 @@ class MainInputs(ft.Column):
 
 
 class logo(ft.Image):
-
     def __init__(self):
         super().__init__()
         self.src = "assets/16792526538172.jpg"
@@ -176,7 +174,6 @@ class logo(ft.Image):
 
 
 class IconButtonRow(ft.Row):
-
     def __init__(self, icon, on_click=None, new_page=None, alignment=ft.MainAxisAlignment.END):
         super().__init__(
             controls=[
@@ -197,9 +194,8 @@ class IconButtonRow(ft.Row):
             vertical_alignment=ft.CrossAxisAlignment.END,
         )
 
+
 # Clase que inicializa la página principal
-
-
 class AboutPage(ft.Row):
 
     def __init__(self, function):
@@ -245,9 +241,8 @@ class AboutPage(ft.Row):
         self.expand = True
         self.controls = [column]
 
+
 # Clase que inicializa la clase con los datos
-
-
 class data_page(ft.Row):
     def __init__(self, text, inputs_data, page, change, new_page):
 
@@ -264,9 +259,8 @@ class data_page(ft.Row):
 
         self.controls = [column]
 
+
 # Clase que inicializa el contenedor de la contraseña
-
-
 class PasswordContainer(ft.Container):
     def __init__(self, page, psw, service=None, password=None, create=False):
         self.psw = psw
@@ -291,18 +285,18 @@ class PasswordContainer(ft.Container):
         else:
             self.edit()
 
-            self.bgcolor = ft.Colors.BLUE_400
-            self.padding = 10
-            self.border_radius = 10
-            self.shadow = ft.BoxShadow(
-                spread_radius=1,
-                blur_radius=30,
-                color=ft.Colors.BLUE_400,
-                blur_style=ft.ShadowBlurStyle.OUTER,
-            )
-            self.ink = True
-            self.on_click = lambda e: self.click()
-            self.clicked = False
+        self.bgcolor = ft.Colors.BLUE_400
+        self.padding = 10
+        self.border_radius = 10
+        self.shadow = ft.BoxShadow(
+            spread_radius=1,
+            blur_radius=30,
+            color=ft.Colors.BLUE_400,
+            blur_style=ft.ShadowBlurStyle.OUTER,
+        )
+        self.ink = True
+        self.on_click = lambda e: self.click()
+        self.clicked = False
 
     def click(self):
         self.clicked = not self.clicked
@@ -365,12 +359,11 @@ class PasswordContainer(ft.Container):
 
             if not new:
                 self.delete()
-            else:
-                self.error_text.show_error("Introduzca unos campos válidos")
+        else:
+            self.error_text.show_error("Introduzca unos campos válidos")
 
 
 class Passwords_show(ft.GridView):
-
     def __init__(self, page):
 
         self.page = page
@@ -404,13 +397,13 @@ class Passwords_show(ft.GridView):
 
         # Añadir las contraseñas individualmente a cada casilla de la clase PasswordContainer
         for username, service, password in user:
-            containers.append(service, password)
+            containers.append((service, password))
 
-            for service, password in containers:
-                self.controls.append(PasswordContainer(
-                    service=service, password=password, page=self.page, psw=self))
-            if self.page:
-                self.page.update()
+        for service, password in containers:
+            self.controls.append(PasswordContainer(
+                service=service, password=password, page=self.page, psw=self))
+        if self.page:
+            self.page.update()
 
     @ property
     def email(self):
@@ -433,30 +426,30 @@ class MainPage(ft.Row):
         search_row = ft.SearchBar(
             bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: search())
         row = ft.Row(
-            [IconButtonRow(ft.Icons.PERSON, on_click=print), ft.VerticalDivider(width=130), search_row], spacing=30)
+            [ft.VerticalDivider(width=130), ft.VerticalDivider(width=130), search_row], spacing=30)
 
         self.alignment = ft.MainAxisAlignment.SPACE_BETWEEN
 
         back = IconButtonRow(
             on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
-        add = IconButtonRow(on_click=lambda e: self.add_psw(page),
+        add = IconButtonRow(on_click=lambda e: add_psw(page),
                             icon=ft.icons.ADD_CIRCLE)
 
         self.controls = [row, add, back, self.error_text]
 
-    def add_psw(self, page):
-        self.psw.controls.append(PasswordContainer(
-            page=page, psw=self.psw, create=True))
-        page.update()
+        def add_psw(page):
+            psw.controls.append(PasswordContainer(
+                page=page, psw=psw, create=True))
+            page.update()
 
-    def search(self):
-        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
-        if self.search_row.value != "":
-            df1 = df[(df["User"] == global_email) & (df["Service"] ==
-                                                     self.search_row.value)]
-        else:
-            df1 = df
+        def search():
+            df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+            if search_row.value != "":
+                df1 = df[(df["User"] == global_email) & (df["Service"] ==
+                                                     search_row.value)]
+            else:
+                df1 = df
             if df1.size == 0:
                 self.error_text.show_error(
                     "No se ha encontrado ninguna contraseña que corresponda a ese servicio")
@@ -484,7 +477,7 @@ class NanoPage(ft.Column):
             aspect_ratio=16/9,
             on_loaded=lambda e: print("Video loaded successfully!"),
             on_error=lambda e: print(f"Error loading video: {
-                e.data}")  # Error handling callback
+                                     e.data}")  # Error handling callback
         )
 
         video_container = ft.Container(video_player,
@@ -493,9 +486,9 @@ class NanoPage(ft.Column):
                                        alignment=ft.alignment.center,  # Center the video
                                        bgcolor=ft.Colors.BLACK  # Optional: Add a background color
                                        )
-
-        video_row = ft.Row([video_container],
-                           alignment=ft.MainAxisAlignment.CENTER)
+        
+        video_row = ft.Row([video_container], alignment=ft.MainAxisAlignment.CENTER)
 
         # Add the video player to the controls
         self.controls = [video_row]
+

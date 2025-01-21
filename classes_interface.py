@@ -75,7 +75,7 @@ class MainInputs(ft.Column):
     def validate_email(self, email, password=None, content=None, mode="register"):
         # Valida el correo electrónico y la contraseña según el modo.
 
-        df = read_encrypted_from_csv("users.csv", encryption_system, header=0)
+        df = read_encrypted_from_csv("users.csv", encryption_system, header=0, columns = ["User", "Password"])
         users = df["User"]
         users_list = users.values.tolist()
         df2 = df[["User", "Password"]]
@@ -151,6 +151,7 @@ class MainInputs(ft.Column):
                 df = pd.DataFrame(
                     data={"User": [global_email], "Password": [password]})
                 save_encrypted_to_csv(df, "users.csv", encryption_system, header=[
+                                      "User", "Password"], column=[
                                       "User", "Password"])
                 self.clear_inputs()
                 change(new_page)
@@ -272,21 +273,21 @@ class PasswordContainer(ft.Container):
         self.psw = psw
         self.create = create
         self.error_text = SnackBarError(page)
-        self.service = service
-        self.password = password
+        self.service_value = service
+        self.password_value = password
         super().__init__()
 
         if not self.create:
-            text = ft.Container(content=ft.Text(value="Servicio"),
+            self.text = ft.Container(content=ft.Text(value="Servicio"),
                                 bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-            service = ft.Text(
-                value=self.service)
-            text2 = ft.Container(content=ft.Text(
+            self.service = ft.Text(
+                value=self.service_value)
+            self.text2 = ft.Container(content=ft.Text(
                 value="Contraseña"), bgcolor=ft.Colors.BLUE_100, padding=6, border_radius=10)
-            password = ft.Text(value=self.password)
+            self.password = ft.Text(value=self.password_value)
 
             self.controls = ft.Column(
-                [text, service, text2, password, self.error_text])
+                [self.text, self.service, self.text2, self.password, self.error_text])
             self.content = self.controls
         else:
             self.edit()
@@ -319,23 +320,27 @@ class PasswordContainer(ft.Container):
 
         if not self.clicked:
 
+            self.controls = ft.Column(
+                [self.text, self.service, self.text2, self.password, self.error_text])
+
             self.content = self.controls
             self.update()
 
     def delete(self):
-        df = read_encrypted_from_csv("psw.csv", encryption_system, header=0)
+        df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column = ["User","Service", "Password"])
         df1 = df[(df["User"] == global_email) & (df["Service"] ==
-                                                 self.service) & (df["Password"] == self.password)]
+                                                 self.service_value) & (df["Password"] == self.password_value)]
         df.drop(df1.index, inplace=True)
         save_encrypted_to_csv(df, 'psw.csv', encryption_system, header=[
+            "User", "Service", "Password"], column=[
             "User", "Service", "Password"])
         self.psw.load_passwords()
 
     def edit(self):
-        self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
+        self.service_field = ft.CupertinoTextField(value=self.service_value, on_submit=lambda e: self.save(
             new=False), autofocus=True, text_size=15, max_lines=1, capitalization=ft.TextCapitalization.SENTENCES)
         self.password_field = ft.CupertinoTextField(
-            value=self.password, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
+            value=self.password_value, on_submit=lambda e: self.save(new=False),  text_size=15, max_lines=1)
         divider = ft.Divider(height=20)
         plus = ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=lambda e: self.save(
             new=False), bgcolor=ft.Colors.WHITE, mini=True)
@@ -356,8 +361,13 @@ class PasswordContainer(ft.Container):
                 'Password': [self.password_field.value]
             }
 
+            print(data)
+
             df = pd.DataFrame(data)
+
+            print(df)
             save_encrypted_to_csv(df, 'psw.csv', encryption_system, header=[
+                                      "User", "Service", "Password"], column=[
                                       "User", "Service", "Password"])
 
         if not new:
@@ -368,7 +378,6 @@ class PasswordContainer(ft.Container):
 
 class Passwords_show(ft.GridView):
     def __init__(self, page):
-
         self.page = page
         global global_email
         self.email = global_email
@@ -383,13 +392,9 @@ class Passwords_show(ft.GridView):
         self.runs_count = 7
         self.expand = 1
 
-    # Cargar las contraseñas en función del nombre de usuario
-
     def load_passwords(self, df=None):
-
         if df is None:
-            df = read_encrypted_from_csv(
-                "psw.csv", encryption_system, header=0)
+            df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column = ["User", "Service", "Password"])
 
         self.controls = []
         if not self.email:
@@ -397,30 +402,35 @@ class Passwords_show(ft.GridView):
 
         containers = []
 
-        # Cargar los valores desde la base de datos
+        # Filter and sort the dataframe
         df1 = df[df["User"] == global_email]
         df1 = df1.sort_values(by=["Service"])
+        
+        # Only select the columns we need
+        df1 = df1[["User", "Service", "Password"]]
         user = df1.values.tolist()
 
-        # Añadir las contraseñas individualmente a cada casilla de la clase PasswordContainer
-        for username, service, password in user:
-            containers.append((service, password))
+        # Add the passwords individually to each cell of the PasswordContainer class
+        for row in user:
+            if len(row) >= 3:  # Make sure we have all required fields
+                username, service, password = row[:3]  # Take only the first 3 values
+                containers.append((service, password))
 
         for service, password in containers:
             self.controls.append(PasswordContainer(
                 service=service, password=password, page=self.page, psw=self))
+            
         if self.page:
             self.page.update()
 
-    @ property
+    @property
     def email(self):
-        return global_email  # Siempre recoger el valor más actualizado
+        return global_email  # Always get the most updated value
 
-    @ email.setter
+    @email.setter
     def email(self, value):
         self._email = value
         self.load_passwords()
-
 
 class MainPage(ft.Row):
     def __init__(self, function, page, psw):
@@ -451,7 +461,7 @@ class MainPage(ft.Row):
 
         def search():
             df = read_encrypted_from_csv(
-                "psw.csv", encryption_system, header=0)
+                "psw.csv", encryption_system, header=0, column = ["User","Service", "Password"])
             if search_row.value != "":
                 df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                          search_row.value)]
@@ -540,31 +550,11 @@ class DataEncryption:
             return None
 
 
-def save_encrypted_to_csv(df, filename, encryption_system, header):
-    """Save DataFrame to CSV with encrypted rows while preserving column structure."""
-    if df.empty:
-        return
-
-    # Store column names
-    columns = df.columns.tolist()
-
-    encrypted_rows = []
-    for _, row in df.iterrows():
-        row_dict = {
-            'data': row.to_dict(),
-            'columns': columns
-        }
-        encrypted_data = encryption_system.encrypt_data(row_dict)
-        encrypted_rows.append({'encrypted_data': encrypted_data})
-
-    encrypted_df = pd.DataFrame(encrypted_rows)
-    encrypted_df.to_csv(filename, index=False, encoding='utf-8', header=header)
-
-
-def read_encrypted_from_csv(filename, encryption_system, header):
+def read_encrypted_from_csv(filename, encryption_system, header, column):
     """Read and decrypt CSV data into DataFrame while restoring column structure."""
     if not os.path.exists(filename):
-        return pd.DataFrame()
+        # Return empty DataFrame with required columns
+        return pd.DataFrame(columns=column)
 
     try:
         df = pd.read_csv(filename, encoding='utf-8', header=header)
@@ -574,50 +564,124 @@ def read_encrypted_from_csv(filename, encryption_system, header):
             columns = None
 
             for _, row in df.iterrows():
-                decrypted_row = encryption_system.decrypt_data(
-                    row['encrypted_data'])
+                decrypted_row = encryption_system.decrypt_data(row['encrypted_data'])
                 if decrypted_row:
                     if columns is None:
                         columns = decrypted_row['columns']
                     decrypted_data.append(decrypted_row['data'])
 
             if decrypted_data:
-                return pd.DataFrame(decrypted_data)
-            return pd.DataFrame(columns=['User', 'Service', 'Password'])
+                result_df = pd.DataFrame(decrypted_data)
+                # Ensure all required columns exist
+                for col in column:
+                    if col not in result_df.columns:
+                        result_df[col] = ''
+                return result_df
+            return pd.DataFrame(columns=column)
         else:
-            # Return unencrypted data as-is
+            # For unencrypted data, ensure required columns exist
+            for col in column:
+                if col not in df.columns:
+                    df[col] = ''
             return df
 
     except (pd.errors.EmptyDataError, KeyError):
         return pd.DataFrame(columns=['User', 'Service', 'Password'])
 
+# def save_encrypted_to_csv(df, filename, encryption_system, header, column):
+#     """Save DataFrame to CSV with encrypted rows while preserving column structure."""
+#     if df.empty:
+#         # Create empty DataFrame with required columns
+#         df = pd.DataFrame(columns=column)
+    
+#     # Ensure all required columns exist
+#     for col in column:
+#         if col not in df.columns:
+#             df[col] = ''
 
-def migrate_to_encrypted(filename, encryption_system):
+#     # Store column names
+#     columns = df.columns.tolist()
+
+#     encrypted_rows = []
+#     for _, row in df.iterrows():
+#         row_dict = {
+#             'data': row.to_dict(),
+#             'columns': columns
+#         }
+#         encrypted_data = encryption_system.encrypt_data(row_dict)
+#         encrypted_rows.append({'encrypted_data': encrypted_data})
+
+#     encrypted_df = pd.DataFrame(encrypted_rows)
+#     encrypted_df.to_csv(filename, index=False, encoding='utf-8', header=header)
+
+def save_encrypted_to_csv(df, filename, encryption_system, header, column):
+    """Save DataFrame to CSV with encrypted rows while preserving column structure."""
+    # If DataFrame is empty, create with required columns
+    if df.empty:
+        df = pd.DataFrame(columns=column)
+    
+    # Ensure all required columns exist
+    for col in column:
+        if col not in df.columns:
+            df[col] = ''
+
+    # Read existing data if file exists
+    existing_df = None
+    if os.path.exists(filename):
+        existing_df = read_encrypted_from_csv(filename, encryption_system, header=0, column=column)
+    
+    # If we have existing data, concatenate with new data
+    if existing_df is not None and not existing_df.empty:
+        df = pd.concat([existing_df, df], ignore_index=True)
+        # Remove duplicates if needed
+        df = df.drop_duplicates(subset=['User', 'Service'], keep='last')
+
+    # Store column names
+    columns = df.columns.tolist()
+
+    # Create encrypted rows
+    encrypted_rows = []
+    for _, row in df.iterrows():
+        row_dict = {
+            'data': row.to_dict(),
+            'columns': columns
+        }
+        encrypted_data = encryption_system.encrypt_data(row_dict)
+        encrypted_rows.append({'encrypted_data': encrypted_data})
+
+    # Create DataFrame with encrypted data
+    encrypted_df = pd.DataFrame(encrypted_rows)
+    
+    # Save with single column header
+    encrypted_df.to_csv(filename, index=False, encoding='utf-8', header=['encrypted_data'])
+
+
+def migrate_to_encrypted(filename, encryption_system, header, column):
     """Migrate existing unencrypted CSV to encrypted format."""
     if not os.path.exists(filename):
         # Create empty file with correct structure
-        df = pd.DataFrame(columns=['User', 'Service', 'Password'])
-        save_encrypted_to_csv(df, filename, encryption_system)
+        df = pd.DataFrame(columns=column)
+        save_encrypted_to_csv(df, filename, encryption_system, header, column)
         return
 
     try:
-        df = pd.read_csv(filename, encoding='utf-8')
+        df = pd.read_csv(filename, encoding='utf-8', header=header)
 
         if 'encrypted_data' in df.columns:
             return
 
         # Backup original file
         backup_filename = f"{filename}.backup"
-        df.to_csv(backup_filename, index=False, encoding='utf-8')
+        df.to_csv(backup_filename, index=False, encoding='utf-8', header=header)
 
         # Save as encrypted
-        save_encrypted_to_csv(df, filename, encryption_system)
+        save_encrypted_to_csv(df, filename, encryption_system, header, column)
 
     except Exception as e:
         print(f"Migration error: {e}")
         # Create empty file with correct structure
-        df = pd.DataFrame(columns=['User', 'Service', 'Password'])
-        save_encrypted_to_csv(df, filename, encryption_system)
+        df = pd.DataFrame(columns=column)
+        save_encrypted_to_csv(df, filename, encryption_system, header, column)
 
 
 encryption_system = DataEncryption()

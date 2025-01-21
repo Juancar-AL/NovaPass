@@ -13,8 +13,7 @@ def main(page: ft.Page):
             page.controls.extend(pages.get(new_page, []))
             page.update()
             if new_page == "main":
-                psw_page.load_passwords(df=pd.read_csv(
-                    "psw.csv", encoding="utf-8", header=0))
+                psw_page.load_passwords()
             page.update()
         else:
             page.window.close()

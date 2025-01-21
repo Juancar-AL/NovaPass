@@ -4,12 +4,18 @@
 # Good luck trying to optimize this code.
 # Hours wasted on this code: 0
 
-
 import flet as ft
 import time
 import pandas as pd
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+import base64
+import json
+import os
+
+
+# At the top of the file, after imports
 
 global global_email
 global_email = None
@@ -69,7 +75,7 @@ class MainInputs(ft.Column):
     def validate_email(self, email, password=None, content=None, mode="register"):
         # Valida el correo electrónico y la contraseña según el modo.
 
-        df = pd.read_csv("users.csv", encoding="utf-8", header=0)
+        df = read_encrypted_from_csv("users.csv", encryption_system, header=0)
         users = df["User"]
         users_list = users.values.tolist()
         df2 = df[["User", "Password"]]
@@ -144,8 +150,8 @@ class MainInputs(ft.Column):
             if self.validate_email(global_email, mode="register") and self.validate_passwords(password, password2):
                 df = pd.DataFrame(
                     data={"User": [global_email], "Password": [password]})
-                df.to_csv("users.csv", mode="a", index=False,
-                          header=0, encoding="utf-8")
+                save_encrypted_to_csv(df, "users.csv", encryption_system, header=[
+                                      "User", "Password"])
                 self.clear_inputs()
                 change(new_page)
         elif len(self.inputs) == 2:
@@ -317,14 +323,13 @@ class PasswordContainer(ft.Container):
             self.update()
 
     def delete(self):
-        df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+        df = read_encrypted_from_csv("psw.csv", encryption_system, header=0)
         df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                  self.service) & (df["Password"] == self.password)]
         df.drop(df1.index, inplace=True)
-        df.to_csv('psw.csv', header=["User", "Service", "Password"],
-                  index=False, encoding='utf-8')
-        self.psw.load_passwords(df=pd.read_csv(
-            "psw.csv", encoding="utf-8", header=0))
+        save_encrypted_to_csv(df, 'psw.csv', encryption_system, header=[
+            "User", "Service", "Password"])
+        self.psw.load_passwords()
 
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service, on_submit=lambda e: self.save(
@@ -352,13 +357,11 @@ class PasswordContainer(ft.Container):
             }
 
             df = pd.DataFrame(data)
+            save_encrypted_to_csv(df, 'psw.csv', encryption_system, header=[
+                                      "User", "Service", "Password"])
 
-            # Append the DataFrame to the CSV file
-            df.to_csv('psw.csv', mode='a', header=0,
-                      index=False, encoding='utf-8')
-
-            if not new:
-                self.delete()
+        if not new:
+            self.delete()
         else:
             self.error_text.show_error("Introduzca unos campos válidos")
 
@@ -382,7 +385,11 @@ class Passwords_show(ft.GridView):
 
     # Cargar las contraseñas en función del nombre de usuario
 
-    def load_passwords(self, df):
+    def load_passwords(self, df=None):
+
+        if df is None:
+            df = read_encrypted_from_csv(
+                "psw.csv", encryption_system, header=0)
 
         self.controls = []
         if not self.email:
@@ -412,8 +419,7 @@ class Passwords_show(ft.GridView):
     @ email.setter
     def email(self, value):
         self._email = value
-        self.load_passwords(df=pd.read_csv(
-            "psw.csv", encoding="utf-8", header=0))
+        self.load_passwords()
 
 
 class MainPage(ft.Row):
@@ -444,10 +450,11 @@ class MainPage(ft.Row):
             page.update()
 
         def search():
-            df = pd.read_csv("psw.csv", encoding="utf-8", header=0)
+            df = read_encrypted_from_csv(
+                "psw.csv", encryption_system, header=0)
             if search_row.value != "":
                 df1 = df[(df["User"] == global_email) & (df["Service"] ==
-                                                     search_row.value)]
+                                                         search_row.value)]
             else:
                 df1 = df
             if df1.size == 0:
@@ -486,9 +493,131 @@ class NanoPage(ft.Column):
                                        alignment=ft.alignment.center,  # Center the video
                                        bgcolor=ft.Colors.BLACK  # Optional: Add a background color
                                        )
-        
-        video_row = ft.Row([video_container], alignment=ft.MainAxisAlignment.CENTER)
+
+        video_row = ft.Row([video_container],
+                           alignment=ft.MainAxisAlignment.CENTER)
 
         # Add the video player to the controls
         self.controls = [video_row]
 
+
+class DataEncryption:
+    def __init__(self):
+        self.key_file = "encryption_key.key"
+        self.key = self._load_or_create_key()
+
+    def _load_or_create_key(self):
+        if os.path.exists(self.key_file):
+            with open(self.key_file, "rb") as f:
+                return f.read()
+        else:
+            key = get_random_bytes(32)
+            with open(self.key_file, "wb") as f:
+                f.write(key)
+            return key
+
+    def encrypt_data(self, data):
+        json_data = json.dumps(data)
+        iv = get_random_bytes(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        padded_data = pad(json_data.encode(), AES.block_size)
+        encrypted_data = cipher.encrypt(padded_data)
+        combined = iv + encrypted_data
+        return base64.b64encode(combined).decode('utf-8')
+
+    def decrypt_data(self, encrypted_str):
+        try:
+            combined = base64.b64decode(encrypted_str.encode('utf-8'))
+            iv = combined[:AES.block_size]
+            encrypted_data = combined[AES.block_size:]
+            cipher = AES.new(self.key, AES.MODE_CBC, iv)
+            decrypted_padded = cipher.decrypt(encrypted_data)
+            decrypted_str = unpad(
+                decrypted_padded, AES.block_size).decode('utf-8')
+            return json.loads(decrypted_str)
+        except Exception as e:
+            print(f"Decryption error: {e}")
+            return None
+
+
+def save_encrypted_to_csv(df, filename, encryption_system, header):
+    """Save DataFrame to CSV with encrypted rows while preserving column structure."""
+    if df.empty:
+        return
+
+    # Store column names
+    columns = df.columns.tolist()
+
+    encrypted_rows = []
+    for _, row in df.iterrows():
+        row_dict = {
+            'data': row.to_dict(),
+            'columns': columns
+        }
+        encrypted_data = encryption_system.encrypt_data(row_dict)
+        encrypted_rows.append({'encrypted_data': encrypted_data})
+
+    encrypted_df = pd.DataFrame(encrypted_rows)
+    encrypted_df.to_csv(filename, index=False, encoding='utf-8', header=header)
+
+
+def read_encrypted_from_csv(filename, encryption_system, header):
+    """Read and decrypt CSV data into DataFrame while restoring column structure."""
+    if not os.path.exists(filename):
+        return pd.DataFrame()
+
+    try:
+        df = pd.read_csv(filename, encoding='utf-8', header=header)
+
+        if 'encrypted_data' in df.columns:
+            decrypted_data = []
+            columns = None
+
+            for _, row in df.iterrows():
+                decrypted_row = encryption_system.decrypt_data(
+                    row['encrypted_data'])
+                if decrypted_row:
+                    if columns is None:
+                        columns = decrypted_row['columns']
+                    decrypted_data.append(decrypted_row['data'])
+
+            if decrypted_data:
+                return pd.DataFrame(decrypted_data)
+            return pd.DataFrame(columns=['User', 'Service', 'Password'])
+        else:
+            # Return unencrypted data as-is
+            return df
+
+    except (pd.errors.EmptyDataError, KeyError):
+        return pd.DataFrame(columns=['User', 'Service', 'Password'])
+
+
+def migrate_to_encrypted(filename, encryption_system):
+    """Migrate existing unencrypted CSV to encrypted format."""
+    if not os.path.exists(filename):
+        # Create empty file with correct structure
+        df = pd.DataFrame(columns=['User', 'Service', 'Password'])
+        save_encrypted_to_csv(df, filename, encryption_system)
+        return
+
+    try:
+        df = pd.read_csv(filename, encoding='utf-8')
+
+        if 'encrypted_data' in df.columns:
+            return
+
+        # Backup original file
+        backup_filename = f"{filename}.backup"
+        df.to_csv(backup_filename, index=False, encoding='utf-8')
+
+        # Save as encrypted
+        save_encrypted_to_csv(df, filename, encryption_system)
+
+    except Exception as e:
+        print(f"Migration error: {e}")
+        # Create empty file with correct structure
+        df = pd.DataFrame(columns=['User', 'Service', 'Password'])
+        save_encrypted_to_csv(df, filename, encryption_system)
+
+
+encryption_system = DataEncryption()

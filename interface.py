@@ -42,10 +42,12 @@ def main(page: ft.Page):
 
     psw_page = cl.Passwords_show(page)
 
+    logo = cl.Logo_2(width=800, opacity=0.2)
+
     log_page = cl.data_page(
-        "Iniciar sesión", log_inputs_data, page, change=page_change, new_page="main")
+        "Inicio de sesión", log_inputs_data, page, change=page_change, new_page="main")
     reg_page = cl.data_page(
-        "Registrarse", reg_inputs_data, page, change=page_change, new_page="main")
+        "Registro", reg_inputs_data, page, change=page_change, new_page="main")
 
     main_page = cl.MainPage(page_change, page, psw_page)
 
@@ -59,7 +61,14 @@ def main(page: ft.Page):
         "welcome": [quit, about_page],
         "login": [back_button, log_page],
         "register": [back_button, reg_page],
-        "main": [main_page, psw_page],
+        "main": [main_page, ft.Stack([ft.Container(
+            ft.Column([logo, ft.Divider(height=200, opacity=0.0)], alignment=ft.MainAxisAlignment.CENTER,
+                      horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            alignment=ft.alignment.top_center,
+            expand=True,
+            width=page.width,
+            height=page.height
+        ), psw_page])],
         "nano": [back_button, nano_page]
     }
 

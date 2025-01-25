@@ -1,6 +1,5 @@
 import flet as ft
 import classes_interface as cl
-import pandas as pd
 
 
 def main(page: ft.Page):

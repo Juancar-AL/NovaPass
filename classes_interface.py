@@ -1,9 +1,3 @@
-# Dear programmer,
-# When I wrote this code only God and I knew how it worked.
-# Now, only God knows.
-# Good luck trying to optimize this code.
-# Hours wasted on this code: 0
-
 import flet as ft
 import time
 import pandas as pd
@@ -15,18 +9,19 @@ import json
 import os
 
 
-# At the top of the file, after imports
+# Declaramos el email como global para que sea accesible desde todo el código
 
 global global_email
 global_email = None
 
 
-# Configuración barra para muestra de errores
+# Clase para mostrar errores
 class SnackBarError(ft.SnackBar):
     def __init__(self, page):
         super().__init__(content=ft.Text("Error"), bgcolor="red")
         self.page = page
 
+    # Método que muestra el error
     def show_error(self, message):
 
         # Configuración visual
@@ -166,20 +161,11 @@ class MainInputs(ft.Column):
 
             if global_email == "root" or self.validate_email(global_email, self.password, mode="login"):
                 change(new_page)
-            elif (global_email == "nano" and self.password == "33") or self.validate_email(global_email, self.password, mode="login"):
+            elif (global_email == "nano" and self.password == "33"):
                 change("nano")
 
-# Clase que almacena el logo de la aplicación
 
-
-class logo(ft.Image):
-    def __init__(self):
-        super().__init__()
-        self.src = "assets/logo.png"
-        self.width = 400
-        self.fit = ft.ImageFit.FILL
-
-# Botón para añdir botones
+# Botón para añdir botones de icono
 
 
 class IconButtonRow(ft.Row):
@@ -209,7 +195,8 @@ class AboutPage(ft.Row):
 
     def __init__(self, function):
 
-        login_button = ft.CupertinoButton(
+        # Botón de inicio de sesión
+        self.login_button = ft.CupertinoButton(
             content=ft.Text(
                 "Iniciar sesión"
             ),
@@ -219,7 +206,8 @@ class AboutPage(ft.Row):
             bgcolor=ft.Colors.BLUE_400,
         )
 
-        register_button = ft.CupertinoButton(
+        # Botón del registro
+        self.register_button = ft.CupertinoButton(
             content=ft.Text(
                 "Regístrate"
             ),
@@ -231,16 +219,12 @@ class AboutPage(ft.Row):
 
         super().__init__()
 
-        # Create buttons
-        AboutPage.login_button = login_button
-        AboutPage.register_button = register_button
-
         column = ft.Column(
             [
-                logo(),
+                Logo_2(width=400, opacity=1),
                 ft.Divider(),
                 ft.Column(
-                    [login_button, register_button],
+                    [self.login_button, self.register_button],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             ],
@@ -260,7 +244,7 @@ class data_page(ft.Row):
 
         super().__init__()
 
-        column = ft.Column([logo(), ft.Divider(), MainInputs(text, inputs_data, page, change, new_page)],
+        column = ft.Column([Logo_2(width=400, opacity=1), ft.Divider(), MainInputs(text, inputs_data, page, change, new_page)],
                            alignment=ft.MainAxisAlignment.CENTER,
                            horizontal_alignment=ft.CrossAxisAlignment.CENTER
                            )
@@ -282,6 +266,7 @@ class PasswordContainer(ft.Container):
         self.password_value = password
         super().__init__()
 
+        # Comprobación del modo de creación de contraseñas
         if not self.create:
             self.text = ft.Container(content=ft.Text(value="Servicio"),
                                      bgcolor=ft.Colors.BLUE_400, padding=6, border_radius=10)
@@ -310,7 +295,9 @@ class PasswordContainer(ft.Container):
         self.on_click = lambda e: self.click()
         self.clicked = False
 
+    # Función que se ejecutará si se pulsa el contenedor de la contraseña
     def click(self):
+        # Se establece ese contenedor como pulsado o no pulsado
         self.clicked = not self.clicked
         if self.clicked:
             edit = ft.FloatingActionButton(
@@ -331,6 +318,7 @@ class PasswordContainer(ft.Container):
             self.content = self.controls
             self.update()
 
+    # Método para la eliminación de contraseñas
     def delete(self):
         df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column=[
                                      "User", "Service", "Password"])
@@ -341,6 +329,7 @@ class PasswordContainer(ft.Container):
             "User", "Service", "Password"])
         self.psw.load_passwords()
 
+    # Método que cambia lo que se muestra en el contenedor para así permitir la edición
     def edit(self):
         self.service_field = ft.CupertinoTextField(value=self.service_value, placeholder_text="Servicio", on_submit=lambda e: self.save(
             new=False), autofocus=True, text_size=15, max_lines=1, capitalization=ft.TextCapitalization.SENTENCES)
@@ -354,6 +343,7 @@ class PasswordContainer(ft.Container):
         if self.page:
             self.update()
 
+    # Método que guarda la contraseña editada o creada
     def save(self, new=True):
         if self.service_field.value != "" and self.password_field.value != "":
 
@@ -373,6 +363,8 @@ class PasswordContainer(ft.Container):
         else:
             self.error_text.show_error("Introduzca unos campos válidos")
 
+# Casilla en la que se muestran todas las contarseñas de ese usuario
+
 
 class Passwords_show(ft.GridView):
     def __init__(self, page):
@@ -390,6 +382,7 @@ class Passwords_show(ft.GridView):
         self.runs_count = 7
         self.expand = 1
 
+    # Método que carga las contraseñas de ese usuario
     def load_passwords(self, df=None):
         if df is None:
             df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column=[
@@ -401,18 +394,18 @@ class Passwords_show(ft.GridView):
 
         containers = []
 
-        # Filter and sort the dataframe
+        # Filtrar y ordenar los datos
         df1 = df[df["User"] == global_email]
         df1 = df1.sort_values(by=["Service"])
 
-        # Only select the columns we need
+        # Selecciona las columnas necesarias
         df1 = df1[["User", "Service", "Password"]]
         user = df1.values.tolist()
 
-        # Add the passwords individually to each cell of the PasswordContainer class
+        # Añade las contraseñas individualmente a cada celda
         for row in user:
-            if len(row) >= 3:  # Make sure we have all required fields
-                # Take only the first 3 values
+            if len(row) >= 3:  # Comprobar que existen todos los campos necesarios
+                # Se toman los 3 primeros valores
                 username, service, password = row[:3]
                 containers.append((service, password))
 
@@ -425,12 +418,14 @@ class Passwords_show(ft.GridView):
 
     @property
     def email(self):
-        return global_email  # Always get the most updated value
+        return global_email  # Siempre toma el valor más nuevo del email
 
     @email.setter
     def email(self, value):
         self._email = value
         self.load_passwords()
+
+# Clase que almacena el logo de la aplicación
 
 
 class Logo_2(ft.Image):
@@ -442,6 +437,8 @@ class Logo_2(ft.Image):
         self.opacity = opacity  # Reduce opacity to 70%
         self.width = width
 
+# Clase que almacena la página principal del gestor
+
 
 class MainPage(ft.Row):
     def __init__(self, function, page, psw):
@@ -452,39 +449,43 @@ class MainPage(ft.Row):
 
         self.logo = Logo_2(width=200, opacity=1)
 
-        search_row = ft.SearchBar(
-            bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: search())
+        self.search_row = ft.SearchBar(
+            bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: self.search())
         row = ft.Row(
-            [ft.VerticalDivider(width=15), self.logo, ft.VerticalDivider(width=30), search_row], spacing=30)
+            [ft.VerticalDivider(width=15), self.logo, ft.VerticalDivider(width=30), self.search_row], spacing=30)
 
         self.alignment = ft.MainAxisAlignment.SPACE_BETWEEN
 
         back = IconButtonRow(
             on_click=function, new_page="welcome", icon=ft.Icons.ARROW_BACK)
 
-        add = IconButtonRow(on_click=lambda e: add_psw(page),
+        add = IconButtonRow(on_click=lambda e: self.add_psw(page),
                             icon=ft.icons.ADD_CIRCLE)
 
         self.controls = [row, add, back, self.error_text]
 
-        def add_psw(page):
-            psw.controls.append(PasswordContainer(
-                page=page, psw=psw, create=True))
-            page.update()
+    # Método que añade una nueva contraseña
+    def add_psw(self, page):
+        self.psw.controls.append(PasswordContainer(
+            page=page, psw=self.psw, create=True))
+        page.update()
 
-        def search():
-            df = read_encrypted_from_csv(
-                "psw.csv", encryption_system, header=0, column=["User", "Service", "Password"])
-            if search_row.value != "":
-                df1 = df[(df["User"] == global_email) & (df["Service"] ==
-                                                         search_row.value)]
-            else:
-                df1 = df
-            if df1.size == 0:
-                self.error_text.show_error(
-                    "No se ha encontrado ninguna contraseña que corresponda a ese servicio")
-            else:
-                self.psw.load_passwords(df=df1)
+    # Método que busca las contraseñas
+    def search(self):
+        df = read_encrypted_from_csv(
+            "psw.csv", encryption_system, header=0, column=["User", "Service", "Password"])
+        if self.search_row.value != "":
+            df1 = df[(df["User"] == global_email) & (df["Service"] ==
+                                                     self.search_row.value)]
+        else:
+            df1 = df
+        if df1.size == 0:
+            self.error_text.show_error(
+                "No se ha encontrado ninguna contraseña que corresponda a ese servicio")
+        else:
+            self.psw.load_passwords(df=df1)
+
+# Easter egg
 
 
 class NanoPage(ft.Column):
@@ -494,41 +495,42 @@ class NanoPage(ft.Column):
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-        # Ensure the video path is correct and accessible
+        # Verificar que la dirección del video es correcta y este es accesible
         video = ft.VideoMedia("assets/descargar.mp4")
 
-        # Add proper configuration for the video player
+        # Configurar el reproductor de video
         video_player = ft.Video(
             playlist=[video],
-            playlist_mode=ft.PlaylistMode.LOOP,  # Add the video to the playlist
+            playlist_mode=ft.PlaylistMode.LOOP,  # Añadir el video a la playlist
             expand=False,
-            autoplay=True,  # Automatically play the video
-            muted=True,  # Set muted to True if you want to disable sound
-            aspect_ratio=16/9,
+            autoplay=True,  # reproducir el video automáticamente
+            muted=True,  # Silenciar el video
+            aspect_ratio=9/16,
             on_loaded=lambda e: print("Video loaded successfully!"),
             on_error=lambda e: print(f"Error loading video: {
                                      e.data}")  # Error handling callback
         )
 
         video_container = ft.Container(video_player,
-                                       width=800,  # Set the desired width of the video
-                                       height=450,  # Set the desired height of the video
-                                       alignment=ft.alignment.center,  # Center the video
-                                       bgcolor=ft.Colors.BLACK  # Optional: Add a background color
+                                       width=800,  # Ajustar el ancho del video
+                                       height=450,  # Ajustar el alto del video
+                                       alignment=ft.alignment.center,  # Centrar el video
                                        )
 
         video_row = ft.Row([video_container],
                            alignment=ft.MainAxisAlignment.CENTER)
 
-        # Add the video player to the controls
+        # Añadir el reproductor de video a los controles
         self.controls = [video_row]
 
 
+# Clase del encriptador de AES
 class DataEncryption:
     def __init__(self):
         self.key_file = "encryption_key.key"
         self.key = self._load_or_create_key()
 
+    # Se carga o se crea una nueva clave
     def _load_or_create_key(self):
         if os.path.exists(self.key_file):
             with open(self.key_file, "rb") as f:
@@ -539,6 +541,7 @@ class DataEncryption:
                 f.write(key)
             return key
 
+    # Método que encripta los datos
     def encrypt_data(self, data):
         json_data = json.dumps(data)
         iv = get_random_bytes(AES.block_size)
@@ -548,6 +551,7 @@ class DataEncryption:
         combined = iv + encrypted_data
         return base64.b64encode(combined).decode('utf-8')
 
+    # Método que decripta los datos
     def decrypt_data(self, encrypted_str):
         try:
             combined = base64.b64decode(encrypted_str.encode('utf-8'))
@@ -562,11 +566,13 @@ class DataEncryption:
             print(f"Decryption error: {e}")
             return None
 
+# Lee los datos encriptados desde el archivo csv
+
 
 def read_encrypted_from_csv(filename, encryption_system, header, column):
-    """Read and decrypt CSV data into DataFrame while restoring column structure."""
+    # Lee y descripta los datos de CSV en un DataFrame de pandas y restaura la estructura de columnas
     if not os.path.exists(filename):
-        # Return empty DataFrame with required columns
+        # Devuelve un DataFrame vacío siguiendo la estructura de las columnas
         return pd.DataFrame(columns=column)
 
     try:
@@ -586,14 +592,14 @@ def read_encrypted_from_csv(filename, encryption_system, header, column):
 
             if decrypted_data:
                 result_df = pd.DataFrame(decrypted_data)
-                # Ensure all required columns exist
+                # Revisa que todas las columnas necesarias existen
                 for col in column:
                     if col not in result_df.columns:
                         result_df[col] = ''
                 return result_df
             return pd.DataFrame(columns=column)
         else:
-            # For unencrypted data, ensure required columns exist
+            # Para los datos sin desencriptar revisa que todas las columnas necesarias existan
             for col in column:
                 if col not in df.columns:
                     df[col] = ''
@@ -604,36 +610,37 @@ def read_encrypted_from_csv(filename, encryption_system, header, column):
 
 
 def save_encrypted_to_csv(df, filename, encryption_system, column, delete=False,):
-    """Save DataFrame to CSV with encrypted rows while preserving column structure."""
-    # If DataFrame is empty, create with required columns
+    # Guarda un DataFrame a un archivo CSV con las filas encriptadas mientras mantiene la estructura de las columnas
+
+    # Si el DataFrame está vacío se crea uno con la estructura de columnas necesarias
     if df.empty:
         df = pd.DataFrame(columns=column)
 
-    # Ensure all required columns exist
+    # Revisa que todas las columnas existan
     for col in column:
         if col not in df.columns:
             df[col] = ''
 
-    # Read existing data if file exists
+    # Lee los datos si el archivo CSV existe
     existing_df = None
     if os.path.exists(filename):
         existing_df = read_encrypted_from_csv(
             filename, encryption_system, header=0, column=column)
 
-    # If we have existing data, concatenate with new data
+    # Si hay nuevos datos se concatenan con los datos antiguos
     if not delete:
         if existing_df is not None and not existing_df.empty:
             df = pd.concat([existing_df, df], ignore_index=True)
-            # Remove duplicates if needed
+            # Si se necesita se eliminan los duplicados
         subset = ['User', 'Service'] if 'Service' in df.columns else ['User']
         df = df.drop_duplicates(subset=subset, keep='last')
     else:
         df = df
 
-    # Store column names
+    # Se guardan los nombres de las columnas
     columns = df.columns.tolist()
 
-    # Create encrypted rows
+    # Se crean las  filas encriptadas
     encrypted_rows = []
     for _, row in df.iterrows():
         row_dict = {
@@ -643,12 +650,13 @@ def save_encrypted_to_csv(df, filename, encryption_system, column, delete=False,
         encrypted_data = encryption_system.encrypt_data(row_dict)
         encrypted_rows.append({'encrypted_data': encrypted_data})
 
-    # Create DataFrame with encrypted data
+    # Se crea un DataFrame con los datos encriptados
     encrypted_df = pd.DataFrame(encrypted_rows)
 
-    # Save with single column header
+    # Se guardan como una única columna
     encrypted_df.to_csv(filename, index=False,
                         encoding='utf-8', header=['encrypted_data'])
 
 
+# Se inicializa el sistema de encriptación
 encryption_system = DataEncryption()

@@ -2,16 +2,20 @@ import flet as ft
 import classes_interface as cl
 
 
+# Función princial de flet que carga la página principal
 def main(page: ft.Page):
     page.title = "NovaPass | Password Manager"
     page.theme_mode = ft.ThemeMode.LIGHT
 
+    # Función para cambiar entre las diferentes páginas
     def page_change(new_page):
         if new_page != None:
-            page.controls.clear()
+            page.controls.clear()  # Se limpian los elementos de la página actual
+            # Se añaden los elementos de la página nueva
             page.controls.extend(pages.get(new_page, []))
-            page.update()
+            page.update()  # Se actualiza la páagina
             if new_page == "main":
+                # En caso de que la página sea la principal, se cargan las contraseñas
                 psw_page.load_passwords()
             page.update()
         else:
@@ -35,7 +39,7 @@ def main(page: ft.Page):
             "can_reveal_password": True},
     ]
 
-    # Instancias de las páginas
+    # Instancias para las páginas
     quit = cl.IconButtonRow(on_click=page_change,
                             icon=ft.Icons.EXIT_TO_APP_ROUNDED)
     about_page = cl.AboutPage(page_change)

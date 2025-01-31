@@ -432,7 +432,7 @@ class Logo_2(ft.Image):
 
     def __init__(self, width, opacity):
         super().__init__()
-        self.src = f"assets/logo.png"
+        self.src = "https://i.imgur.com/OBuFh3G.png"
         self.fit = ft.ImageFit.CONTAIN
         self.opacity = opacity  # Reduce opacity to 70%
         self.width = width
@@ -496,7 +496,7 @@ class NanoPage(ft.Column):
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
         # Verificar que la dirección del video es correcta y este es accesible
-        video = ft.VideoMedia("assets/descargar.mp4")
+        video = ft.VideoMedia("https://media-hosting.imagekit.io//f9078d3a5b5e45b2/descargar.mp4?Expires=1832955978&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=VssReUJbe3nKXGl4APW3WYqi4Tuvt-uN9QOr45CLg2SS6vuZN4Sg~ix21623M~-CXCaPNWGZgYcLJeLt1Us58v6x~weVysyQo1DAGesSWUhgW1jzl19TqySJVGIJrrfz9iHkDsheFTTIajfnJU5TB1-1BQ3LYOuuqwamrUhJDMjCu2Fim6wfFCai54AQzhNeZ9S3yOrMwLJO9wrIfTYcg-BGjz9x~64rnljJ98JUr~3W~HJ8e5kPZj4DNAQkPRNvayuxDYp3Pan8qGOThzJOB~mVVPdamyZkXhU5Zs3ODKdZcepu4-4GnbuX4Z0vXhRFhdskv9-o51dnvO7X1k1x3g__")
 
         # Configurar el reproductor de video
         video_player = ft.Video(

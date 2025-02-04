@@ -73,7 +73,7 @@ class MainInputs(ft.Column):
         # Valida el correo electrónico y la contraseña según el modo.
 
         df = read_encrypted_from_csv(
-            "users.csv", encryption_system, header=0, column=["User", "Password"])
+            "C:/Nova/data/users.csv", encryption_system, header=0, column=["User", "Password"])
         users = df["User"]
         users_list = users.values.tolist()
         df2 = df[["User", "Password"]]
@@ -148,7 +148,7 @@ class MainInputs(ft.Column):
             if self.validate_email(global_email, mode="register") and self.validate_passwords(password, password2):
                 df = pd.DataFrame(
                     data={"User": [global_email], "Password": [password]})
-                save_encrypted_to_csv(df, "users.csv", encryption_system, column=[
+                save_encrypted_to_csv(df, "C:/Nova/data/users.csv", encryption_system, column=[
                                       "User", "Password"])
                 self.clear_inputs()
                 change(new_page)
@@ -269,12 +269,13 @@ class PasswordContainer(ft.Container):
         # Comprobación del modo de creación de contraseñas
         if not self.create:
             self.text = ft.Container(content=ft.Text(value="Servicio"),
-                                     bgcolor=ft.Colors.BLUE_400, padding=6, border_radius=10)
-            self.service = ft.Text(
-                value=self.service_value)
+                                     bgcolor=ft.Colors.BLUE_200, padding=6, border_radius=10)
+            self.service = ft.Container(ft.Text(
+                value=self.service_value), bgcolor=ft.Colors.WHITE, padding=6, border_radius=10)
             self.text2 = ft.Container(content=ft.Text(
-                value="Contraseña"), bgcolor=ft.Colors.BLUE_400, padding=6, border_radius=10)
-            self.password = ft.Text(value=self.password_value)
+                value="Contraseña"), bgcolor=ft.Colors.BLUE_200, padding=6, border_radius=10)
+            self.password = ft.Container(ft.Text(
+                value=self.password_value), bgcolor=ft.Colors.WHITE, padding=6, border_radius=10)
 
             self.controls = ft.Column(
                 [self.text, self.service, self.text2, self.password, self.error_text])
@@ -320,13 +321,17 @@ class PasswordContainer(ft.Container):
 
     # Método para la eliminación de contraseñas
     def delete(self):
-        df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column=[
+        df = read_encrypted_from_csv("C:/Nova/data/psw.csv", encryption_system, header=0, column=[
                                      "User", "Service", "Password"])
         df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                  self.service_value) & (df["Password"] == self.password_value)]
         df.drop(df1.index, inplace=True)
-        save_encrypted_to_csv(df, 'psw.csv', encryption_system, delete=True, column=[
-            "User", "Service", "Password"])
+        try:
+            save_encrypted_to_csv(df, 'C:/Nova/data/psw.csv', encryption_system, delete=True, column=[
+                "User", "Service", "Password"])
+        except:
+            self.psw.load_passwords()
+
         self.psw.load_passwords()
 
     # Método que cambia lo que se muestra en el contenedor para así permitir la edición
@@ -355,7 +360,7 @@ class PasswordContainer(ft.Container):
 
             df = pd.DataFrame(data)
 
-            save_encrypted_to_csv(df, 'psw.csv', encryption_system, column=[
+            save_encrypted_to_csv(df, 'C:/Nova/data/psw.csv', encryption_system, column=[
                                       "User", "Service", "Password"])
 
         if not new:
@@ -385,7 +390,7 @@ class Passwords_show(ft.GridView):
     # Método que carga las contraseñas de ese usuario
     def load_passwords(self, df=None):
         if df is None:
-            df = read_encrypted_from_csv("psw.csv", encryption_system, header=0, column=[
+            df = read_encrypted_from_csv("C:/Nova/data/psw.csv", encryption_system, header=0, column=[
                                          "User", "Service", "Password"])
 
         self.controls = []
@@ -452,7 +457,7 @@ class MainPage(ft.Row):
         self.search_row = ft.SearchBar(
             bar_hint_text="Busca las contraseñas de tus servicios", capitalization=ft.TextCapitalization.SENTENCES, bar_leading=ft.Icon(ft.Icons.SEARCH), divider_color=ft.Colors.BLUE_400, on_submit=lambda e: self.search())
         row = ft.Row(
-            [ft.VerticalDivider(width=15), self.logo, ft.VerticalDivider(width=30), self.search_row], spacing=30)
+            [ft.VerticalDivider(width=10), self.logo, ft.VerticalDivider(width=10), self.search_row], spacing=30)
 
         self.alignment = ft.MainAxisAlignment.SPACE_BETWEEN
 
@@ -462,7 +467,10 @@ class MainPage(ft.Row):
         add = IconButtonRow(on_click=lambda e: self.add_psw(page),
                             icon=ft.icons.ADD_CIRCLE)
 
-        self.controls = [row, add, back, self.error_text]
+        reload = IconButtonRow(on_click=lambda e: self.psw.load_passwords(),
+                               icon=ft.Icons.REPLAY_CIRCLE_FILLED_ROUNDED)
+
+        self.controls = [row, add, reload, back, self.error_text]
 
     # Método que añade una nueva contraseña
     def add_psw(self, page):
@@ -473,7 +481,7 @@ class MainPage(ft.Row):
     # Método que busca las contraseñas
     def search(self):
         df = read_encrypted_from_csv(
-            "psw.csv", encryption_system, header=0, column=["User", "Service", "Password"])
+            "C:/Nova/data/psw.csv", encryption_system, header=0, column=["User", "Service", "Password"])
         if self.search_row.value != "":
             df1 = df[(df["User"] == global_email) & (df["Service"] ==
                                                      self.search_row.value)]
@@ -527,7 +535,7 @@ class NanoPage(ft.Column):
 # Clase del encriptador de AES
 class DataEncryption:
     def __init__(self):
-        self.key_file = "encryption_key.key"
+        self.key_file = "C:/Nova/encryption_key.key"
         self.key = self._load_or_create_key()
 
     # Se carga o se crea una nueva clave

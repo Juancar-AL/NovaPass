@@ -1,7 +1,7 @@
 # NovaPass: Aplicación de Gestión Segura de Contraseñas
 
 <div align="center">
-  <img src="assets/asset1.png" alt="Logo NovaPass" width="200">
+  <img src="assets/asset1.png" alt="NovaPass" width="200">
   
   <br>
 
@@ -21,7 +21,7 @@
 ### 🖥️ Interfaz de Usuario
 Construida con **Flet** para ofrecer una experiencia moderna.
 
-![Panel Principal](assets/asset2.png)
+![Panel Principal](assets/asset5.png)
 *Vista general del gestor de contraseñas*
 
 ### 🔐 Cifrado Avanzado
@@ -29,7 +29,7 @@ Construida con **Flet** para ofrecer una experiencia moderna.
 - Genera una clave única por instalación.
 - Cifra archivos CSV completos.
 
-![Detalle de Seguridad](assets/asset3.png)
+![Detalle de Seguridad](assets/asset2.png)
 
 ## Tecnologías Utilizadas
 
@@ -52,3 +52,4 @@ NovaPass implementa un sistema de cifrado sofisticado:
 1. Instalar dependencias:
    ```bash
    pip install flet pandas pycryptodome
+
